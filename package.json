@@ -1,0 +1,23 @@
+{
+  "name": "mamas-kitchen-final",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.16",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "@splidejs/splide": "^4.1.4",
+    "firebase": "^11.7.3",
+    "gsap": "^3.13.0"
+  }
+}

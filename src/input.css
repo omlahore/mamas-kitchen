@@ -1,0 +1,18 @@
+/* 1) Import Rubik first so it’s available to everything */
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;900&display=swap');
+
+/* 2) Pull in Tailwind’s layers */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 3) Base overrides: force Rubik and uppercase titles/buttons */
+@layer base {
+  html, body {
+    font-family: 'Rubik', sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6, button {
+    font-family: 'Rubik', sans-serif;
+    text-transform: uppercase;
+  }
+}
