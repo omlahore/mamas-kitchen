@@ -16,7 +16,7 @@ export function MenuGrid(container) {
   container.innerHTML = "";
   HeroCarousel(container);
 
-  // 2️⃣ Sticky toolbar (search + nav)
+  // 2️⃣ Sticky toolbar (search + nav placeholder)
   const toolbar = document.createElement("div");
   toolbar.className = "sticky top-0 bg-white z-20 shadow-sm";
   toolbar.innerHTML = `
@@ -38,10 +38,11 @@ export function MenuGrid(container) {
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
                viewBox="0 0 24 24">
             <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="6"  y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
+      <!-- here we'll inject our dynamic nav -->
       <div id="navContainer" class="flex gap-3 flex-wrap uppercase"></div>
     </div>
   `;
@@ -58,10 +59,7 @@ export function MenuGrid(container) {
   let currentCat    = "ALL";
   let currentSearch = "";
 
-  // 5️⃣ Render category nav
-  CategoryNav(toolbar.querySelector("#navContainer"));
-
-  // 6️⃣ Search + clear handlers
+  // 5️⃣ Search + clear handlers
   const searchEl = toolbar.querySelector("#searchInput");
   const clearBtn = toolbar.querySelector("#clearSearch");
   searchEl.addEventListener("input", e => {
@@ -76,24 +74,30 @@ export function MenuGrid(container) {
     renderItems();
   });
 
-  // 7️⃣ Category-change listener
+  // 6️⃣ Category-change listener (will catch bubbled events)
   toolbar.addEventListener("categoryChange", e => {
     currentCat = e.detail.toUpperCase();
     renderItems();
   });
 
-  // 8️⃣ Firestore real-time subscription
+  // 7️⃣ Firestore real-time subscription
   const q = query(collection(db, "menuItems"), orderBy("createdAt", "desc"));
   onSnapshot(q, snap => {
     allItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // ▶️ build a unique list of categories from your data
+    const cats = Array.from(new Set(allItems.map(i => i.category)));
+    // ▶️ render nav (injects buttons into #navContainer)
+    CategoryNav(toolbar.querySelector("#navContainer"), ["All", ...cats]);
+
     renderItems();
   });
 
-  // 9️⃣ Render & animate
+  // 8️⃣ Render & animate
   function renderItems() {
     grid.innerHTML = "";
 
-    // Apply filters
+    // apply filters
     let items = allItems.filter(item =>
       currentCat === "ALL" || item.category.toUpperCase() === currentCat
     );
@@ -104,7 +108,7 @@ export function MenuGrid(container) {
       );
     }
 
-    // Build cards
+    // build cards
     items.forEach(item => {
       const { name, desc, imageUrl, category, price } = item;
       const card = document.createElement("div");
@@ -114,7 +118,6 @@ export function MenuGrid(container) {
       ].join(" ");
 
       card.innerHTML = `
-        <!-- Image -->
         <div class="relative h-56 overflow-hidden">
           <img src="${imageUrl}" alt="${name}"
                class="w-full h-full object-cover transition-transform duration-500
@@ -122,8 +125,6 @@ export function MenuGrid(container) {
           <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent
                       opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         </div>
-
-        <!-- Content -->
         <div class="p-6 text-center font-sans">
           <span class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold
                        px-3 py-1 rounded-full uppercase tracking-wide mb-4">
@@ -135,17 +136,14 @@ export function MenuGrid(container) {
           <p class="text-neutral-700 text-base">
             ${desc}
           </p>
-          <!-- Price -->
           <p class="mt-4 text-xl font-semibold text-neutral-900">
             $${price}
           </p>
         </div>
       `;
-
       grid.append(card);
     });
 
-    // Staggered animation
     gsap.fromTo(
       grid.children,
       { opacity: 0, y: 20 },
