@@ -11,8 +11,8 @@ module.exports = {
         sans: ["Rubik", "sans-serif"],
       },
       colors: {
-        // Override default “white” to a 10%-opaque #186873
-        white: 'rgba(24, 104, 115, 0.1)',
+        // (no more `white:` override here, so bg-white is real white)
+        overlay: 'rgba(24, 104, 115, 0.1)',  // optional: if you want a global overlay
         brand: {
           50:  "#f3faf7",
           100: "#daf3e6",

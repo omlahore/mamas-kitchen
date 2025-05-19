@@ -1,14 +1,13 @@
 // src/components/CategoryNav.js
 
 export function CategoryNav(container, categories = []) {
-  // 1️⃣ Clear out any old buttons
+  // clear out any old buttons
   container.innerHTML = "";
 
-  // 2️⃣ Nav wrapper
+  // nav wrapper
   const nav = document.createElement("div");
   nav.className = "flex flex-wrap justify-center gap-4";
 
-  // 3️⃣ Build each button
   categories.forEach((name, i) => {
     // skip blanks
     if (!name || !name.trim()) return;
@@ -18,27 +17,25 @@ export function CategoryNav(container, categories = []) {
     btn.textContent = name;
     btn.dataset.cat = name;
 
-    // same backgrounds as before, but always white text
+    // active = teal bg + white text; inactive = semi-opaque white bg + dark text
     btn.className = [
       "px-6 py-3 text-lg font-semibold rounded-full transition",
       i === 0
-        ? "bg-brand-500 text-white"        // first = “All” active
-        : "bg-white/70 text-white hover:bg-white/90"
+        ? "bg-brand-500 text-white"
+        : "bg-white/70 text-neutral-900 hover:bg-white/90"
     ].join(" ");
 
     btn.addEventListener("click", () => {
-      // toggle classes
       nav.querySelectorAll("button").forEach(b => {
         if (b === btn) {
-          b.classList.remove("bg-white/70", "hover:bg-white/90");
+          b.classList.remove("bg-white/70", "text-neutral-900", "hover:bg-white/90");
           b.classList.add("bg-brand-500", "text-white");
         } else {
           b.classList.remove("bg-brand-500", "text-white");
-          b.classList.add("bg-white/70", "text-white", "hover:bg-white/90");
+          b.classList.add("bg-white/70", "text-neutral-900", "hover:bg-white/90");
         }
       });
 
-      // bubble up the event
       container.dispatchEvent(new CustomEvent("categoryChange", {
         detail: name,
         bubbles: true
@@ -48,6 +45,5 @@ export function CategoryNav(container, categories = []) {
     nav.appendChild(btn);
   });
 
-  // 4️⃣ Append to container
   container.appendChild(nav);
 }
