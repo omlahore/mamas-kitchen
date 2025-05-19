@@ -32,9 +32,11 @@ export function HeroCarousel(container) {
   const title = document.createElement("div");
   title.className = "absolute inset-0 flex items-center justify-center pointer-events-none";
   title.innerHTML = `
-    <h1 class="text-white text-4xl sm:text-6xl lg:text-7xl font-display drop-shadow-lg">
-      Mama’s Kitchen
-    </h1>
+    <img
+      src="/logo.png"
+      alt="Mama’s Kitchen Logo"
+      class="h-20 sm:h-24 lg:h-32 drop-shadow-lg"
+    />
   `;
   wrapper.append(title);
 
