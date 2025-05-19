@@ -118,9 +118,13 @@ export function MenuGrid(container) {
           </span>
           <h3 class="text-3xl uppercase font-bold text-neutral-900 mb-2">${name}</h3>
           <p class="text-neutral-700 text-base">${desc}</p>
+
+          <!-- Main price in AED -->
           <p class="mt-4 text-xl font-semibold text-neutral-900">
             ${fmt.format(price)}
           </p>
+
+          <!-- Optional “with chai” price -->
           ${
             priceWithChai != null
               ? `<p class="mt-1 text-sm italic text-neutral-700">
@@ -140,21 +144,32 @@ export function MenuGrid(container) {
     );
   }
 
-  // ➉ Scroll-to-Top button
+  // ➉ Scroll-to-Top button with progress indicator
   (function addScrollToTopButton() {
     const btn = document.createElement("button");
     btn.id = "scrollToTopBtn";
-    btn.innerHTML = "↑";
     btn.className =
-      "fixed bottom-4 right-4 p-3 rounded-full bg-brand-500 text-white " +
-      "shadow-lg opacity-0 pointer-events-none transition-opacity duration-300";
+      "fixed bottom-4 right-4 flex items-center justify-center gap-1 " +
+      "p-3 rounded-full bg-brand-500 text-white shadow-lg " +
+      "opacity-0 pointer-events-none transition-opacity duration-300";
+
+    // initial content: arrow + percent
+    btn.innerHTML = `
+      <span class="text-xl leading-none">↑</span>
+      <span id="scrollPercent" class="text-sm">0%</span>
+    `;
     btn.addEventListener("click", () =>
       window.scrollTo({ top: 0, behavior: "smooth" })
     );
     document.body.appendChild(btn);
 
     window.addEventListener("scroll", () => {
-      if (window.scrollY > 300) {
+      const scrollY = window.scrollY;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = maxScroll > 0 ? Math.round((scrollY / maxScroll) * 100) : 0;
+      btn.querySelector("#scrollPercent").textContent = `${pct}%`;
+
+      if (scrollY > 300) {
         btn.classList.remove("opacity-0", "pointer-events-none");
         btn.classList.add("opacity-100", "pointer-events-auto");
       } else {
