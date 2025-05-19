@@ -17,8 +17,11 @@ export function MenuGrid(container) {
   HeroCarousel(container);
 
   // 2️⃣ Glass-blur toolbar (search + dynamic tabs)
-  const toolbar = document.createElement("div");
-  toolbar.className = "sticky top-0 z-20 bg-white/10 backdrop-blur-md shadow-md";
+// after
+const toolbar = document.createElement("div");
+// full-width teal tint + blur
+toolbar.className = "sticky top-0 z-20 bg-brand-500/10 backdrop-blur-md shadow-md";
+
   toolbar.innerHTML = `
     <div class="container mx-auto px-6 py-6 flex flex-col items-center gap-6">
       <div class="relative w-full max-w-xl">
