@@ -1,4 +1,13 @@
-/* 1) Import Rubik first so it’s available to everything */
+/* 0) Register “Questa Grande Black” */
+@font-face {
+  font-family: 'QuestaGrandeBlack';
+  src: url('/fonts/questa-grande-black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 1) Import Rubik so it’s available everywhere */
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;900&display=swap');
 
 /* 2) Pull in Tailwind’s layers */

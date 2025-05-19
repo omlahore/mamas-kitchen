@@ -132,7 +132,7 @@ card.innerHTML = `
       ${category}
     </span>
     <!-- heading colored #C19462 -->
-    <h3 class="text-3xl uppercase font-bold mb-2 text-[#C19462]">
+    <h3 class="text-3xl uppercase font-heading mb-2 text-[#C19462]">
       ${name}
     </h3>
     <!-- everything else white -->

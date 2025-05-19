@@ -8,6 +8,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
+           heading: ['QuestaGrandeBlack', 'Rubik', 'sans-serif'],
         sans: ["Rubik", "sans-serif"],
       },
       colors: {
