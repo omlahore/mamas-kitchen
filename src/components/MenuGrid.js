@@ -102,41 +102,56 @@ toolbar.className = "sticky top-0 z-20 bg-brand-500/10 backdrop-blur-md shadow-m
     items.forEach(item => {
       const { name, desc, imageUrl, category, price, priceWithChai } = item;
       const card = document.createElement("div");
-      card.className = [
-        "group relative bg-white rounded-2xl shadow-lg overflow-hidden",
-        "transition transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105"
-      ].join(" ");
+card.className = [
+  // card bg set to #186873
+  "group relative bg-brand-500 rounded-2xl shadow-lg overflow-hidden",
+  "transition transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105"
+].join(" ");
 
-      card.innerHTML = `
-        <div class="relative h-56 overflow-hidden">
-          <img src="${imageUrl}" alt="${name}"
-               class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
-          <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent
-                      opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        </div>
-        <div class="p-6 text-center font-sans">
-          <span class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold
-                       px-3 py-1 rounded-full uppercase tracking-wide mb-4">
-            ${category}
-          </span>
-          <h3 class="text-3xl uppercase font-bold text-neutral-900 mb-2">${name}</h3>
-          <p class="text-neutral-700 text-base">${desc}</p>
+card.innerHTML = `
+  <div class="relative h-56 overflow-hidden">
+    <img
+      src="${imageUrl}"
+      alt="${name}"
+      class="w-full h-full object-cover
+             transition-transform duration-500
+             group-hover:scale-105"
+    />
+    <div
+      class="absolute inset-0
+             bg-gradient-to-t from-black/40 to-transparent
+             opacity-0 group-hover:opacity-100
+             transition-opacity duration-300"
+    ></div>
+  </div>
+  <div class="p-6 text-center font-sans text-white">
+    <span
+      class="inline-block bg-brand-100 text-white text-xs font-semibold
+             px-3 py-1 rounded-full uppercase tracking-wide mb-4"
+    >
+      ${category}
+    </span>
+    <!-- heading colored #C19462 -->
+    <h3 class="text-3xl uppercase font-bold mb-2 text-[#C19462]">
+      ${name}
+    </h3>
+    <!-- everything else white -->
+    <p class="text-white text-base">${desc}</p>
 
-          <!-- Main price in AED -->
-          <p class="mt-4 text-xl font-semibold text-neutral-900">
-            ${fmt.format(price)}
-          </p>
+    <p class="mt-4 text-xl font-semibold text-white">
+      ${fmt.format(price)}
+    </p>
 
-          <!-- Optional “with chai” price -->
-          ${
-            priceWithChai != null
-              ? `<p class="mt-1 text-sm italic text-neutral-700">
-                   ${fmt.format(priceWithChai)} with chai
-                 </p>`
-              : ``
-          }
-        </div>
-      `;
+    ${
+      priceWithChai != null
+        ? `<p class="mt-1 text-sm italic text-white">
+             ${fmt.format(priceWithChai)} with chai
+           </p>`
+        : ``
+    }
+  </div>
+`;
+
       grid.append(card);
     });
 
