@@ -1,9 +1,9 @@
 // src/components/MenuGrid.js
 
-import { gsap }         from "gsap";
+import { gsap } from "gsap";
 import { HeroCarousel } from "./HeroCarousel.js";
-import { CategoryNav }  from "./CategoryNav.js";
-import { db }           from "../firebaseConfig.js";
+import { CategoryNav } from "./CategoryNav.js";
+import { db } from "../firebaseConfig.js";
 import {
   collection,
   onSnapshot,
@@ -38,7 +38,7 @@ export function MenuGrid(container) {
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
                viewBox="0 0 24 24">
             <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6"  y1="6" x2="18" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
@@ -58,7 +58,7 @@ export function MenuGrid(container) {
   let currentCat    = "ALL";
   let currentSearch = "";
 
-  // 5️⃣ Render category nav (buttons will be uppercase via CSS)
+  // 5️⃣ Render category nav
   CategoryNav(toolbar.querySelector("#navContainer"));
 
   // 6️⃣ Search + clear handlers
@@ -106,7 +106,7 @@ export function MenuGrid(container) {
 
     // Build cards
     items.forEach(item => {
-      const { name, desc, imageUrl, category } = item;
+      const { name, desc, imageUrl, category, price } = item;
       const card = document.createElement("div");
       card.className = [
         "group relative bg-white rounded-2xl shadow-lg overflow-hidden",
@@ -129,11 +129,15 @@ export function MenuGrid(container) {
                        px-3 py-1 rounded-full uppercase tracking-wide mb-4">
             ${category}
           </span>
-          <h3 class="text-3xl uppercase font-sans font-bold text-neutral-900 mb-2">
+          <h3 class="text-3xl uppercase font-bold text-neutral-900 mb-2">
             ${name}
           </h3>
           <p class="text-neutral-700 text-base">
             ${desc}
+          </p>
+          <!-- Price -->
+          <p class="mt-4 text-xl font-semibold text-neutral-900">
+            $${price}
           </p>
         </div>
       `;
