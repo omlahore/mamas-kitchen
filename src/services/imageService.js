@@ -1,13 +1,17 @@
 // src/services/imageService.js
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "../firebaseConfig.js";
 
 /**
- * Uploads a File to Firebase Storage under "menu-images/"
- * Returns the public download URL.
+ * Reads a File object as a base64 data URL.
+ * No Firebase Storage, no CORS, just returns a string you can stick
+ * directly into Firestore and then into an <img src="…" />.
  */
 export async function uploadDishImage(file) {
-  const fileRef = ref(storage, `menu-images/${Date.now()}-${file.name}`);
-  const snap    = await uploadBytes(fileRef, file);
-  return getDownloadURL(snap.ref);
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      resolve(reader.result); // e.g. "data:image/png;base64,iVBORw0KGgoAAAANS…"
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
