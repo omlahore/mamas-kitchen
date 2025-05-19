@@ -126,7 +126,7 @@ card.innerHTML = `
   </div>
   <div class="p-6 text-center font-sans text-white">
     <span
-      class="inline-block bg-brand-100 text-white text-xs font-semibold
+      class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold
              px-3 py-1 rounded-full uppercase tracking-wide mb-4"
     >
       ${category}
