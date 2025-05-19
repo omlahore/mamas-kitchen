@@ -1,12 +1,11 @@
 // src/components/CategoryNav.js
 
 export function CategoryNav(container, categories = []) {
-  // clear any existing buttons
+  // clear any old buttons
   container.innerHTML = "";
 
-  // wrap
   const nav = document.createElement("div");
-  nav.className = "flex gap-3 flex-wrap uppercase";
+  nav.className = "flex flex-wrap justify-center gap-4";
 
   categories.forEach((name, i) => {
     const btn = document.createElement("button");
@@ -14,24 +13,28 @@ export function CategoryNav(container, categories = []) {
     btn.textContent = name;
     btn.dataset.cat = name;
 
-    // first one (“All”) gets the active styling by default
-    btn.className = i === 0
-      ? "px-5 py-2 text-sm font-semibold rounded-full bg-brand-500 text-white transition-colors"
-      : "px-5 py-2 text-sm font-semibold rounded-full bg-gray-200 text-gray-700 hover:bg-brand-50 hover:text-brand-600 transition-colors";
+    // uniform base style + size
+    btn.className = [
+      "px-6 py-3 text-lg font-semibold rounded-full transition",
+      i === 0
+        // active by default on first (All)
+        ? "bg-brand-500 text-white"
+        : "bg-white/70 text-neutral-900 hover:bg-white/90"
+    ].join(" ");
 
     btn.addEventListener("click", () => {
-      // toggle active classes
+      // swap active/inactive
       nav.querySelectorAll("button").forEach(b => {
         if (b === btn) {
-          b.classList.remove("bg-gray-200", "text-gray-700");
-          b.classList.add("bg-brand-500", "text-white");
+          b.classList.remove("bg-white/70","text-neutral-900");
+          b.classList.add("bg-brand-500","text-white");
         } else {
-          b.classList.remove("bg-brand-500", "text-white");
-          b.classList.add("bg-gray-200", "text-gray-700");
+          b.classList.remove("bg-brand-500","text-white");
+          b.classList.add("bg-white/70","text-neutral-900");
         }
       });
 
-      // dispatch with bubbling so MenuGrid can catch it
+      // bubble up the choice
       container.dispatchEvent(new CustomEvent("categoryChange", {
         detail: name,
         bubbles: true
