@@ -16,13 +16,11 @@ export function MenuGrid(container) {
   container.innerHTML = "";
   HeroCarousel(container);
 
-  // 2️⃣ Glass-blur toolbar
+  // 2️⃣ Glass-blur toolbar (search + dynamic tabs)
   const toolbar = document.createElement("div");
-  toolbar.className =
-    "sticky top-0 z-20 bg-white/10 backdrop-blur-md shadow-md";
+  toolbar.className = "sticky top-0 z-20 bg-white/10 backdrop-blur-md shadow-md";
   toolbar.innerHTML = `
     <div class="container mx-auto px-6 py-6 flex flex-col items-center gap-6">
-      <!-- Search -->
       <div class="relative w-full max-w-xl">
         <input id="searchInput"
                type="text"
@@ -37,8 +35,6 @@ export function MenuGrid(container) {
           <line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
       </div>
-
-      <!-- Tabs placeholder (will be filled dynamically) -->
       <div id="navContainer" class="w-full flex flex-wrap justify-center gap-4"></div>
     </div>
   `;
@@ -47,16 +43,15 @@ export function MenuGrid(container) {
   // 3️⃣ Grid container
   const grid = document.createElement("div");
   grid.id = "menuGrid";
-  grid.className =
-    "container mx-auto px-6 py-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3";
+  grid.className = "container mx-auto px-6 py-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3";
   container.append(grid);
 
   // 4️⃣ Local state
-  let allItems = [];
-  let currentCat = "ALL";
+  let allItems      = [];
+  let currentCat    = "ALL";
   let currentSearch = "";
 
-  // 5️⃣ Search + clear handlers
+  // 5️⃣ Search handler
   const searchEl = toolbar.querySelector("#searchInput");
   searchEl.addEventListener("input", e => {
     currentSearch = e.target.value.trim().toLowerCase();
@@ -73,8 +68,11 @@ export function MenuGrid(container) {
   const q = query(collection(db, "menuItems"), orderBy("createdAt", "desc"));
   onSnapshot(q, snap => {
     allItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // build unique category list
     const cats = Array.from(new Set(allItems.map(i => i.category)));
     CategoryNav(toolbar.querySelector("#navContainer"), ["All", ...cats]);
+
     renderItems();
   });
 
@@ -82,6 +80,14 @@ export function MenuGrid(container) {
   function renderItems() {
     grid.innerHTML = "";
 
+    // prepare currency formatter for AED
+    const fmt = new Intl.NumberFormat("en-AE", {
+      style: "currency",
+      currency: "AED",
+      minimumFractionDigits: 0
+    });
+
+    // apply filters
     let items = allItems.filter(item =>
       currentCat === "ALL" || item.category.toUpperCase() === currentCat
     );
@@ -92,8 +98,17 @@ export function MenuGrid(container) {
       );
     }
 
+    // build cards
     items.forEach(item => {
-      const { name, desc, imageUrl, category, price } = item;
+      const {
+        name,
+        desc,
+        imageUrl,
+        category,
+        price,
+        priceWithChai // optional field
+      } = item;
+
       const card = document.createElement("div");
       card.className = [
         "group relative bg-white rounded-2xl shadow-lg overflow-hidden",
@@ -103,25 +118,39 @@ export function MenuGrid(container) {
       card.innerHTML = `
         <div class="relative h-56 overflow-hidden">
           <img src="${imageUrl}" alt="${name}"
-               class="w-full h-full object-cover transition-transform duration-500
-                      group-hover:scale-105"/>
+               class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
           <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent
                       opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         </div>
-
         <div class="p-6 text-center font-sans">
           <span class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold
                        px-3 py-1 rounded-full uppercase tracking-wide mb-4">
             ${category}
           </span>
-          <h3 class="text-3xl uppercase font-bold text-neutral-900 mb-2">${name}</h3>
-          <p class="text-neutral-700 text-base">${desc}</p>
-          <p class="mt-4 text-xl font-semibold text-neutral-900">$${price}</p>
+          <h3 class="text-3xl uppercase font-bold text-neutral-900 mb-2">
+            ${name}
+          </h3>
+          <p class="text-neutral-700 text-base">
+            ${desc}
+          </p>
+          <!-- main price in AED -->
+          <p class="mt-4 text-xl font-semibold text-neutral-900">
+            ${fmt.format(price)}
+          </p>
+          <!-- optional “with chai” price -->
+          ${
+            priceWithChai != null
+              ? `<p class="mt-1 text-sm italic text-neutral-700">
+                   ${fmt.format(priceWithChai)} with chai
+                 </p>`
+              : ``
+          }
         </div>
       `;
       grid.append(card);
     });
 
+    // fade in / stagger
     gsap.fromTo(
       grid.children,
       { opacity: 0, y: 20 },
