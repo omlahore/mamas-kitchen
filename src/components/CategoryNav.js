@@ -1,14 +1,16 @@
 // src/components/CategoryNav.js
 
 export function CategoryNav(container, categories = []) {
-  // Clear out any old buttons
+  // 1️⃣ Clear out any old buttons
   container.innerHTML = "";
 
+  // 2️⃣ Create the nav wrapper
   const nav = document.createElement("div");
   nav.className = "flex flex-wrap justify-center gap-4";
 
+  // 3️⃣ Build one button per category
   categories.forEach((name, i) => {
-    // Skip any empty category names
+    // Skip any empty/blank category
     if (!name || !name.trim()) return;
 
     const btn = document.createElement("button");
@@ -20,7 +22,7 @@ export function CategoryNav(container, categories = []) {
     btn.className = [
       "px-6 py-3 text-lg font-semibold rounded-full transition",
       i === 0
-        ? "bg-brand-500 text-white"          // “All” (first) is active by default
+        ? "bg-brand-500 text-white"          // First (“All”) active by default
         : "bg-white/70 text-neutral-900 hover:bg-white/90"
     ].join(" ");
 
@@ -44,4 +46,8 @@ export function CategoryNav(container, categories = []) {
     });
 
     nav.appendChild(btn);
-  }
+  });
+
+  // 4️⃣ Append the nav into the container
+  container.appendChild(nav);
+}
