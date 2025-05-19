@@ -1,6 +1,6 @@
 // src/components/AdminPanel.js
-import { auth, db }              from "../firebaseConfig.js";
-import { signOut }               from "firebase/auth";
+import { auth, db } from "../firebaseConfig.js";
+import { signOut } from "firebase/auth";
 import {
   collection,
   onSnapshot,
@@ -8,8 +8,8 @@ import {
   updateDoc,
   deleteDoc,
   doc
-}                                from "firebase/firestore";
-import { uploadDishImage }       from "../services/imageService.js";
+} from "firebase/firestore";
+import { uploadDishImage } from "../services/imageService.js";
 
 export function AdminPanel(container) {
   container.innerHTML = `
@@ -27,10 +27,13 @@ export function AdminPanel(container) {
 
       <!-- Main Grid: Form | List -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
         <!-- Form Panel -->
         <div class="bg-neutral-100 p-8 rounded-xl shadow-lg">
           <h3 class="text-2xl font-semibold mb-6 text-brand-700">Add New Dish</h3>
           <form id="dishForm" class="space-y-5">
+
+            <!-- Dish Name -->
             <div>
               <label for="name" class="block mb-1 font-medium">Dish Name</label>
               <input
@@ -43,6 +46,7 @@ export function AdminPanel(container) {
               >
             </div>
 
+            <!-- Description -->
             <div>
               <label for="desc" class="block mb-1 font-medium">Description</label>
               <input
@@ -55,6 +59,7 @@ export function AdminPanel(container) {
               >
             </div>
 
+            <!-- Base Price -->
             <div>
               <label for="price" class="block mb-1 font-medium">Price (₹)</label>
               <input
@@ -67,6 +72,7 @@ export function AdminPanel(container) {
               >
             </div>
 
+            <!-- Category -->
             <div>
               <label for="category" class="block mb-1 font-medium">Category</label>
               <select
@@ -77,9 +83,11 @@ export function AdminPanel(container) {
                 <option>Breakfast</option>
                 <option>Lunch</option>
                 <option>Dinner</option>
+                <option>Chai</option>
               </select>
             </div>
 
+            <!-- Image Upload -->
             <div>
               <label for="imageFile" class="block mb-1 font-medium">Image</label>
               <input
@@ -96,9 +104,33 @@ export function AdminPanel(container) {
               />
             </div>
 
+            <!-- With Chai? -->
+            <div class="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="withChai"
+                name="withChai"
+                class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+              />
+              <label for="withChai" class="font-medium">With Chai?</label>
+            </div>
+
+            <!-- Conditional Chai Price -->
+            <div id="chaiPriceContainer" class="mt-4 hidden">
+              <label for="chaiPrice" class="block mb-1 font-medium">Chai Price (₹)</label>
+              <input
+                type="number"
+                id="chaiPrice"
+                name="chaiPrice"
+                placeholder="e.g. 20"
+                class="w-full border border-neutral-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-300"
+              />
+            </div>
+
+            <!-- Submit Button (now green!) -->
             <button
               type="submit"
-              class="w-full mt-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg transition"
+              class="w-full mt-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition"
             >
               Add Dish
             </button>
@@ -113,20 +145,26 @@ export function AdminPanel(container) {
     </section>
   `;
 
-  // Logout
+  // ── Show/hide the Chai price field ─────────────────────────────────────────────
+  const withChaiEl         = container.querySelector("#withChai");
+  const chaiPriceContainer = container.querySelector("#chaiPriceContainer");
+  withChaiEl.addEventListener("change", () => {
+    chaiPriceContainer.classList.toggle("hidden", !withChaiEl.checked);
+  });
+
+  // ── Logout ─────────────────────────────────────────────────────────────────────
   container.querySelector("#logoutBtn").onclick = () => signOut(auth);
 
-  // Firestore collection reference
+  // ── Firestore collection reference ────────────────────────────────────────────
   const colRef = collection(db, "menuItems");
 
-  // Real-time listener
+  // ── Real-time listener: render all dishes ─────────────────────────────────────
   onSnapshot(colRef, snapshot => {
     const listEl = container.querySelector("#dishesList");
     listEl.innerHTML = "";
 
     snapshot.docs.forEach(docSnap => {
-      const { name, desc, price, imageUrl } = docSnap.data();
-
+      const { name, desc, price, imageUrl, withChai, chaiPrice } = docSnap.data();
       const card = document.createElement("div");
       card.className = `
         bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition
@@ -134,31 +172,27 @@ export function AdminPanel(container) {
       `;
       card.innerHTML = `
         <div class="h-48 bg-neutral-200">
-          <img
-            src="${imageUrl}"
-            alt="${name}"
-            class="h-full w-full object-cover"
-          />
+          <img src="${imageUrl}" alt="${name}" class="h-full w-full object-cover"/>
         </div>
         <div class="p-5 flex-1 flex flex-col">
           <h4 class="text-lg font-bold text-brand-700 mb-2">${name}</h4>
           <p class="text-neutral-600 flex-1">${desc}</p>
           <div class="mt-4 flex items-center justify-between">
             <span class="text-xl font-semibold text-brand-700">₹${price}</span>
-            <div class="space-x-2">
-              <button
-                data-id="${docSnap.id}"
-                class="editBtn px-3 py-1 bg-yellow-400 hover:bg-yellow-500 text-white rounded-lg transition"
-              >
-                Edit
-              </button>
-              <button
-                data-id="${docSnap.id}"
-                class="delBtn px-3 py-1 bg-red-400 hover:bg-red-500 text-white rounded-lg transition"
-              >
-                Delete
-              </button>
-            </div>
+            ${withChai
+              ? `<span class="text-green-600 font-medium">+ ₹${chaiPrice} Chai</span>`
+              : ``
+            }
+          </div>
+          <div class="mt-4 flex items-center justify-end space-x-2">
+            <button
+              data-id="${docSnap.id}"
+              class="editBtn px-3 py-1 bg-yellow-400 hover:bg-yellow-500 text-white rounded-lg transition"
+            >Edit</button>
+            <button
+              data-id="${docSnap.id}"
+              class="delBtn px-3 py-1 bg-red-400 hover:bg-red-500 text-white rounded-lg transition"
+            >Delete</button>
           </div>
         </div>
       `;
@@ -181,29 +215,42 @@ export function AdminPanel(container) {
     });
   });
 
-  // Form submission
+  // ── Form submission: add a new dish ───────────────────────────────────────────
   container.querySelector("#dishForm").onsubmit = async e => {
     e.preventDefault();
-    const name     = e.target.name.value.trim();
-    const desc     = e.target.desc.value.trim();
-    const price    = Number(e.target.price.value);
-    const category = e.target.category.value;
-    const file     = e.target.imageFile.files[0];
+
+    const name      = e.target.name.value.trim();
+    const desc      = e.target.desc.value.trim();
+    const price     = Number(e.target.price.value);
+    const category  = e.target.category.value;
+    const file      = e.target.imageFile.files[0];
+    const withChai  = e.target.withChai.checked;
+    const chaiPrice = withChai ? Number(e.target.chaiPrice.value) : null;
+
+    if (withChai && (!chaiPrice || chaiPrice <= 0)) {
+      return alert("Please enter a valid Chai price.");
+    }
 
     try {
       let imageUrl = "";
       if (file) {
         imageUrl = await uploadDishImage(file);
       }
+
       await addDoc(colRef, {
         name,
         desc,
         price,
         category,
         imageUrl,
+        withChai,
+        chaiPrice,
         createdAt: Date.now(),
       });
+
+      // reset form & hide chai section
       e.target.reset();
+      chaiPriceContainer.classList.add("hidden");
     } catch (err) {
       console.error("Failed to add dish:", err);
       alert("Error: " + err.message);
