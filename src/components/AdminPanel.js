@@ -1,6 +1,6 @@
 // src/components/AdminPanel.js
-import { auth, db } from "../firebaseConfig.js";
-import { signOut } from "firebase/auth";
+import { auth, db }              from "../firebaseConfig.js";
+import { signOut }               from "firebase/auth";
 import {
   collection,
   onSnapshot,
@@ -8,8 +8,8 @@ import {
   updateDoc,
   deleteDoc,
   doc
-} from "firebase/firestore";
-import { uploadDishImage } from "../services/imageService.js";
+}                                from "firebase/firestore";
+import { uploadDishImage }       from "../services/imageService.js";
 
 export function AdminPanel(container) {
   container.innerHTML = `
@@ -33,13 +33,14 @@ export function AdminPanel(container) {
           <h3 class="text-2xl font-semibold mb-6 text-brand-700">Add New Dish</h3>
           <form id="dishForm" class="space-y-5">
 
+            <!-- hidden field to track editing -->
+            <input type="hidden" id="docId" name="docId" value="" />
+
             <!-- Dish Name -->
             <div>
               <label for="name" class="block mb-1 font-medium">Dish Name</label>
               <input
-                type="text"
-                id="name"
-                name="name"
+                type="text" id="name" name="name"
                 placeholder="e.g. OG Paratha"
                 class="w-full border border-neutral-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300"
                 required
@@ -50,9 +51,7 @@ export function AdminPanel(container) {
             <div>
               <label for="desc" class="block mb-1 font-medium">Description</label>
               <input
-                type="text"
-                id="desc"
-                name="desc"
+                type="text" id="desc" name="desc"
                 placeholder="Short description"
                 class="w-full border border-neutral-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300"
                 required
@@ -63,9 +62,7 @@ export function AdminPanel(container) {
             <div>
               <label for="price" class="block mb-1 font-medium">Price (₹)</label>
               <input
-                type="number"
-                id="price"
-                name="price"
+                type="number" id="price" name="price"
                 placeholder="e.g. 99"
                 class="w-full border border-neutral-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300"
                 required
@@ -76,8 +73,7 @@ export function AdminPanel(container) {
             <div>
               <label for="category" class="block mb-1 font-medium">Category</label>
               <select
-                id="category"
-                name="category"
+                id="category" name="category"
                 class="w-full border border-neutral-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300"
               >
                 <option>Breakfast</option>
@@ -91,10 +87,7 @@ export function AdminPanel(container) {
             <div>
               <label for="imageFile" class="block mb-1 font-medium">Image</label>
               <input
-                type="file"
-                id="imageFile"
-                name="imageFile"
-                accept="image/*"
+                type="file" id="imageFile" name="imageFile" accept="image/*"
                 class="w-full text-sm text-neutral-500 
                        file:mr-4 file:py-2 file:px-4
                        file:rounded-lg file:border-0
@@ -107,9 +100,7 @@ export function AdminPanel(container) {
             <!-- With Chai? -->
             <div class="flex items-center space-x-2">
               <input
-                type="checkbox"
-                id="withChai"
-                name="withChai"
+                type="checkbox" id="withChai" name="withChai"
                 class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
               />
               <label for="withChai" class="font-medium">With Chai?</label>
@@ -119,20 +110,18 @@ export function AdminPanel(container) {
             <div id="chaiPriceContainer" class="mt-4 hidden">
               <label for="chaiPrice" class="block mb-1 font-medium">Chai Price (₹)</label>
               <input
-                type="number"
-                id="chaiPrice"
-                name="chaiPrice"
+                type="number" id="chaiPrice" name="chaiPrice"
                 placeholder="e.g. 20"
                 class="w-full border border-neutral-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-300"
               />
             </div>
 
-            <!-- Submit Button (now green!) -->
+            <!-- Submit Button -->
             <button
               type="submit"
               class="w-full mt-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition"
             >
-              Add Dish
+              <span id="formAction">Add Dish</span>
             </button>
           </form>
         </div>
@@ -145,26 +134,30 @@ export function AdminPanel(container) {
     </section>
   `;
 
-  // ── Show/hide the Chai price field ─────────────────────────────────────────────
+  // toggle visibility of the chai-price field
   const withChaiEl         = container.querySelector("#withChai");
   const chaiPriceContainer = container.querySelector("#chaiPriceContainer");
   withChaiEl.addEventListener("change", () => {
     chaiPriceContainer.classList.toggle("hidden", !withChaiEl.checked);
   });
 
-  // ── Logout ─────────────────────────────────────────────────────────────────────
+  // Logout button
   container.querySelector("#logoutBtn").onclick = () => signOut(auth);
 
-  // ── Firestore collection reference ────────────────────────────────────────────
+  // Firestore collection
   const colRef = collection(db, "menuItems");
 
-  // ── Real-time listener: render all dishes ─────────────────────────────────────
+  // Real-time render of cards
   onSnapshot(colRef, snapshot => {
     const listEl = container.querySelector("#dishesList");
     listEl.innerHTML = "";
 
     snapshot.docs.forEach(docSnap => {
-      const { name, desc, price, imageUrl, withChai, chaiPrice } = docSnap.data();
+      const {
+        name, desc, price, category,
+        imageUrl = "", withChai, chaiPrice
+      } = docSnap.data();
+
       const card = document.createElement("div");
       card.className = `
         bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition
@@ -197,17 +190,34 @@ export function AdminPanel(container) {
         </div>
       `;
 
-      // Edit handler
-      card.querySelector(".editBtn").onclick = async () => {
-        const newPrice = prompt("New price:", price);
-        if (newPrice !== null) {
-          await updateDoc(doc(db, "menuItems", docSnap.id), {
-            price: Number(newPrice)
-          });
+      // Edit → prefill form & switch to “Save Changes”
+      card.querySelector(".editBtn").onclick = () => {
+        const data = docSnap.data();
+
+        // populate inputs
+        container.querySelector("#name").value       = data.name;
+        container.querySelector("#desc").value       = data.desc;
+        container.querySelector("#price").value      = data.price;
+        container.querySelector("#category").value   = data.category;
+        container.querySelector("#withChai").checked = !!data.withChai;
+
+        // show/hide chai price
+        if (data.withChai) {
+          chaiPriceContainer.classList.remove("hidden");
+          container.querySelector("#chaiPrice").value = data.chaiPrice;
+        } else {
+          chaiPriceContainer.classList.add("hidden");
+          container.querySelector("#chaiPrice").value = "";
         }
+
+        // mark edit mode
+        container.querySelector("#formAction").textContent = "Save Changes";
+        container.querySelector("#docId").value           = docSnap.id;
+
+        container.querySelector("#dishForm").scrollIntoView({ behavior: "smooth" });
       };
 
-      // Delete handler
+      // Delete
       card.querySelector(".delBtn").onclick = () =>
         deleteDoc(doc(db, "menuItems", docSnap.id));
 
@@ -215,19 +225,20 @@ export function AdminPanel(container) {
     });
   });
 
-  // ── Form submission: add a new dish ───────────────────────────────────────────
+  // Create or Update on submit
   container.querySelector("#dishForm").onsubmit = async e => {
     e.preventDefault();
+    const form    = e.target;
+    const docId   = form.docId.value;            // empty = new
+    const name    = form.name.value.trim();
+    const desc    = form.desc.value.trim();
+    const price   = Number(form.price.value);
+    const category= form.category.value;
+    const file    = form.imageFile.files[0];
+    const withChai= form.withChai.checked;
+    const chaiPr  = withChai ? Number(form.chaiPrice.value) : null;
 
-    const name      = e.target.name.value.trim();
-    const desc      = e.target.desc.value.trim();
-    const price     = Number(e.target.price.value);
-    const category  = e.target.category.value;
-    const file      = e.target.imageFile.files[0];
-    const withChai  = e.target.withChai.checked;
-    const chaiPrice = withChai ? Number(e.target.chaiPrice.value) : null;
-
-    if (withChai && (!chaiPrice || chaiPrice <= 0)) {
+    if (withChai && (!chaiPr || chaiPr <= 0)) {
       return alert("Please enter a valid Chai price.");
     }
 
@@ -237,22 +248,29 @@ export function AdminPanel(container) {
         imageUrl = await uploadDishImage(file);
       }
 
-      await addDoc(colRef, {
-        name,
-        desc,
-        price,
-        category,
-        imageUrl,
-        withChai,
-        chaiPrice,
-        createdAt: Date.now(),
-      });
+      const payload = {
+        name, desc, price, category,
+        imageUrl, withChai, chaiPrice: chaiPr,
+        // only set createdAt when adding
+        ...( !docId && { createdAt: Date.now() } )
+      };
 
-      // reset form & hide chai section
-      e.target.reset();
+      if (docId) {
+        await updateDoc(doc(db, "menuItems", docId), payload);
+        alert("Dish updated!");
+      } else {
+        await addDoc(colRef, payload);
+        alert("Dish added!");
+      }
+
+      // reset form
+      form.reset();
+      container.querySelector("#formAction").textContent = "Add Dish";
+      container.querySelector("#docId").value = "";
       chaiPriceContainer.classList.add("hidden");
+
     } catch (err) {
-      console.error("Failed to add dish:", err);
+      console.error("Failed to add/update dish:", err);
       alert("Error: " + err.message);
     }
   };
