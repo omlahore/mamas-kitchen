@@ -11,6 +11,8 @@ module.exports = {
         sans: ["Rubik", "sans-serif"],
       },
       colors: {
+         colors: {
+       white: 'rgba(24, 104, 115, 0.1)',
         brand: {
           50:  "#f3faf7",
           100: "#daf3e6",
