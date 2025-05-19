@@ -99,61 +99,62 @@ toolbar.className = "sticky top-0 z-20 bg-brand-500/10 backdrop-blur-md shadow-m
     }
 
     // build cards
-    items.forEach(item => {
-      const { name, desc, imageUrl, category, price, priceWithChai } = item;
-      const card = document.createElement("div");
-card.className = [
-  // card bg set to #186873
-  "group relative bg-brand-500 rounded-2xl shadow-lg overflow-hidden",
-  "transition transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105"
-].join(" ");
+    // inside renderItems(), replace the card-building bit with:
 
-card.innerHTML = `
-  <div class="relative h-56 overflow-hidden">
-    <img
-      src="${imageUrl}"
-      alt="${name}"
-      class="w-full h-full object-cover
-             transition-transform duration-500
-             group-hover:scale-105"
-    />
-    <div
-      class="absolute inset-0
-             bg-gradient-to-t from-black/40 to-transparent
-             opacity-0 group-hover:opacity-100
-             transition-opacity duration-300"
-    ></div>
-  </div>
-  <div class="p-6 text-center font-sans text-white">
-    <span
-      class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold
-             px-3 py-1 rounded-full uppercase tracking-wide mb-4"
-    >
-      ${category}
-    </span>
-    <!-- heading colored #C19462 -->
-    <h3 class="text-3xl uppercase font-heading mb-2 text-[#C19462]">
-      ${name}
-    </h3>
-    <!-- everything else white -->
-    <p class="text-white text-base">${desc}</p>
+items.forEach(item => {
+  const { name, desc, imageUrl, category, price, priceWithChai } = item;
+  const card = document.createElement("div");
+  card.className = [
+-   "group relative bg-brand-500 rounded-2xl shadow-lg overflow-hidden",
++   "group relative bg-brand-500 rounded-2xl shadow-lg overflow-hidden",
++   "flex flex-col",               // ← make card a flex-column
+    "transition transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105"
+  ].join(" ");
 
-    <p class="mt-4 text-xl font-semibold text-white">
-      ${fmt.format(price)}
-    </p>
+  card.innerHTML = `
+    <div class="relative h-56 overflow-hidden">
+      <img src="${imageUrl}" alt="${name}"
+           class="w-full h-full object-cover
+                  transition-transform duration-500
+                  group-hover:scale-105"/>
+      <div class="absolute inset-0
+                  bg-gradient-to-t from-black/40 to-transparent
+                  opacity-0 group-hover:opacity-100
+                  transition-opacity duration-300"></div>
+    </div>
 
-    ${
-      priceWithChai != null
-        ? `<p class="mt-1 text-sm italic text-white">
-             ${fmt.format(priceWithChai)} with chai
-           </p>`
-        : ``
-    }
-  </div>
-`;
+-   <div class="p-6 text-center font-sans text-white">
++   <div class="p-6 flex flex-col justify-between flex-grow text-center font-sans text-white">
+      <!-- Top block: category, title, description -->
+      <div>
+        <span class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold
+                     px-3 py-1 rounded-full uppercase tracking-wide mb-4">
+          ${category}
+        </span>
+        <h3 class="text-3xl uppercase font-heading mb-2 text-[#C19462]">
+          ${name}
+        </h3>
+        <p class="text-white text-base mb-4">${desc}</p>
+      </div>
 
-      grid.append(card);
-    });
+      <!-- Bottom block: prices stuck at bottom -->
+      <div>
+        <p class="text-xl font-semibold mb-1">
+          ${fmt.format(price)}
+        </p>
+        ${
+          priceWithChai != null
+            ? `<p class="text-sm italic">
+                 ${fmt.format(priceWithChai)} with chai
+               </p>`
+            : ``
+        }
+      </div>
+    </div>
+  `;
+  grid.append(card);
+});
+
 
     gsap.fromTo(
       grid.children,
