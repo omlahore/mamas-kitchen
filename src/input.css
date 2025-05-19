@@ -25,3 +25,9 @@
     text-transform: uppercase;
   }
 }
+
+@layer base {
+  button {
+    @apply font-bold;
+  }
+}
