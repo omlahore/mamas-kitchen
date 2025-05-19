@@ -17,11 +17,8 @@ export function MenuGrid(container) {
   HeroCarousel(container);
 
   // 2️⃣ Glass-blur toolbar (search + dynamic tabs)
-// after
-const toolbar = document.createElement("div");
-// full-width teal tint + blur
-toolbar.className = "sticky top-0 z-20 bg-brand-500/10 backdrop-blur-md shadow-md";
-
+  const toolbar = document.createElement("div");
+  toolbar.className = "sticky top-0 z-20 bg-brand-500/10 backdrop-blur-md shadow-md";
   toolbar.innerHTML = `
     <div class="container mx-auto px-6 py-6 flex flex-col items-center gap-6">
       <div class="relative w-full max-w-xl">
@@ -99,62 +96,57 @@ toolbar.className = "sticky top-0 z-20 bg-brand-500/10 backdrop-blur-md shadow-m
     }
 
     // build cards
-    // inside renderItems(), replace the card-building bit with:
+    items.forEach(item => {
+      const { name, desc, imageUrl, category, price, priceWithChai } = item;
 
-items.forEach(item => {
-  const { name, desc, imageUrl, category, price, priceWithChai } = item;
-  const card = document.createElement("div");
-  card.className = [
--   "group relative bg-brand-500 rounded-2xl shadow-lg overflow-hidden",
-+   "group relative bg-brand-500 rounded-2xl shadow-lg overflow-hidden",
-+   "flex flex-col",               // ← make card a flex-column
-    "transition transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105"
-  ].join(" ");
+      const card = document.createElement("div");
+      card.className = [
+        "group relative bg-brand-500 rounded-2xl shadow-lg overflow-hidden",
+        "flex flex-col",                            // stack image + content
+        "transition transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105"
+      ].join(" ");
 
-  card.innerHTML = `
-    <div class="relative h-56 overflow-hidden">
-      <img src="${imageUrl}" alt="${name}"
-           class="w-full h-full object-cover
-                  transition-transform duration-500
-                  group-hover:scale-105"/>
-      <div class="absolute inset-0
-                  bg-gradient-to-t from-black/40 to-transparent
-                  opacity-0 group-hover:opacity-100
-                  transition-opacity duration-300"></div>
-    </div>
+      card.innerHTML = `
+        <div class="relative h-56 overflow-hidden">
+          <img src="${imageUrl}" alt="${name}"
+               class="w-full h-full object-cover
+                      transition-transform duration-500
+                      group-hover:scale-105"/>
+          <div class="absolute inset-0
+                      bg-gradient-to-t from-black/40 to-transparent
+                      opacity-0 group-hover:opacity-100
+                      transition-opacity duration-300"></div>
+        </div>
+        <div class="p-6 flex flex-col justify-between flex-grow text-center font-sans text-white">
+          <!-- Top block: category, title, description -->
+          <div>
+            <span class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold
+                         px-3 py-1 rounded-full uppercase tracking-wide mb-4">
+              ${category}
+            </span>
+            <h3 class="text-3xl uppercase font-heading mb-2 text-[#C19462]">
+              ${name}
+            </h3>
+            <p class="text-white text-base mb-4">${desc}</p>
+          </div>
+          <!-- Bottom block: prices stuck at bottom -->
+          <div>
+            <p class="text-xl font-semibold mb-1">
+              ${fmt.format(price)}
+            </p>
+            ${
+              priceWithChai != null
+                ? `<p class="text-sm italic">
+                     ${fmt.format(priceWithChai)} with chai
+                   </p>`
+                : ``
+            }
+          </div>
+        </div>
+      `;
 
--   <div class="p-6 text-center font-sans text-white">
-+   <div class="p-6 flex flex-col justify-between flex-grow text-center font-sans text-white">
-      <!-- Top block: category, title, description -->
-      <div>
-        <span class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold
-                     px-3 py-1 rounded-full uppercase tracking-wide mb-4">
-          ${category}
-        </span>
-        <h3 class="text-3xl uppercase font-heading mb-2 text-[#C19462]">
-          ${name}
-        </h3>
-        <p class="text-white text-base mb-4">${desc}</p>
-      </div>
-
-      <!-- Bottom block: prices stuck at bottom -->
-      <div>
-        <p class="text-xl font-semibold mb-1">
-          ${fmt.format(price)}
-        </p>
-        ${
-          priceWithChai != null
-            ? `<p class="text-sm italic">
-                 ${fmt.format(priceWithChai)} with chai
-               </p>`
-            : ``
-        }
-      </div>
-    </div>
-  `;
-  grid.append(card);
-});
-
+      grid.append(card);
+    });
 
     gsap.fromTo(
       grid.children,
@@ -172,7 +164,6 @@ items.forEach(item => {
       "p-3 rounded-full bg-brand-500 text-white shadow-lg " +
       "opacity-0 pointer-events-none transition-opacity duration-300";
 
-    // initial content: arrow + percent
     btn.innerHTML = `
       <span class="text-xl leading-none">↑</span>
       <span id="scrollPercent" class="text-sm">0%</span>
