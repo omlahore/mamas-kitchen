@@ -68,11 +68,8 @@ export function MenuGrid(container) {
   const q = query(collection(db, "menuItems"), orderBy("createdAt", "desc"));
   onSnapshot(q, snap => {
     allItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-    // build unique category list
     const cats = Array.from(new Set(allItems.map(i => i.category)));
     CategoryNav(toolbar.querySelector("#navContainer"), ["All", ...cats]);
-
     renderItems();
   });
 
@@ -80,7 +77,7 @@ export function MenuGrid(container) {
   function renderItems() {
     grid.innerHTML = "";
 
-    // prepare currency formatter for AED
+    // AED currency formatter
     const fmt = new Intl.NumberFormat("en-AE", {
       style: "currency",
       currency: "AED",
@@ -100,15 +97,7 @@ export function MenuGrid(container) {
 
     // build cards
     items.forEach(item => {
-      const {
-        name,
-        desc,
-        imageUrl,
-        category,
-        price,
-        priceWithChai // optional field
-      } = item;
-
+      const { name, desc, imageUrl, category, price, priceWithChai } = item;
       const card = document.createElement("div");
       card.className = [
         "group relative bg-white rounded-2xl shadow-lg overflow-hidden",
@@ -127,17 +116,11 @@ export function MenuGrid(container) {
                        px-3 py-1 rounded-full uppercase tracking-wide mb-4">
             ${category}
           </span>
-          <h3 class="text-3xl uppercase font-bold text-neutral-900 mb-2">
-            ${name}
-          </h3>
-          <p class="text-neutral-700 text-base">
-            ${desc}
-          </p>
-          <!-- main price in AED -->
+          <h3 class="text-3xl uppercase font-bold text-neutral-900 mb-2">${name}</h3>
+          <p class="text-neutral-700 text-base">${desc}</p>
           <p class="mt-4 text-xl font-semibold text-neutral-900">
             ${fmt.format(price)}
           </p>
-          <!-- optional “with chai” price -->
           ${
             priceWithChai != null
               ? `<p class="mt-1 text-sm italic text-neutral-700">
@@ -150,11 +133,34 @@ export function MenuGrid(container) {
       grid.append(card);
     });
 
-    // fade in / stagger
     gsap.fromTo(
       grid.children,
       { opacity: 0, y: 20 },
       { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 }
     );
   }
+
+  // ➉ Scroll-to-Top button
+  (function addScrollToTopButton() {
+    const btn = document.createElement("button");
+    btn.id = "scrollToTopBtn";
+    btn.innerHTML = "↑";
+    btn.className =
+      "fixed bottom-4 right-4 p-3 rounded-full bg-brand-500 text-white " +
+      "shadow-lg opacity-0 pointer-events-none transition-opacity duration-300";
+    btn.addEventListener("click", () =>
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    );
+    document.body.appendChild(btn);
+
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 300) {
+        btn.classList.remove("opacity-0", "pointer-events-none");
+        btn.classList.add("opacity-100", "pointer-events-auto");
+      } else {
+        btn.classList.add("opacity-0", "pointer-events-none");
+        btn.classList.remove("opacity-100", "pointer-events-auto");
+      }
+    });
+  })();
 }
