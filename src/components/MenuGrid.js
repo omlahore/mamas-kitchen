@@ -17,11 +17,13 @@ export function MenuGrid(container) {
   HeroCarousel(container);
 
   // 2️⃣ Glass-blur toolbar (search + dynamic tabs)
-  const toolbar = document.createElement("div");
-  toolbar.className = "sticky top-0 z-20 bg-white/10 backdrop-blur-md shadow-md";
+// after
+const toolbar = document.createElement("div");
+// full-width teal tint + blur
+toolbar.className = "sticky top-0 z-20 bg-brand-500/10 backdrop-blur-md shadow-md";
+
   toolbar.innerHTML = `
     <div class="container mx-auto px-6 py-6 flex flex-col items-center gap-6">
-      <!-- Search -->
       <div class="relative w-full max-w-xl">
         <input id="searchInput"
                type="text"
@@ -36,12 +38,7 @@ export function MenuGrid(container) {
           <line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
       </div>
-
-      <!-- TABS BAR: now full‐width solid teal -->
-      <div id="navContainer"
-           class="w-full flex flex-wrap justify-center gap-4
-                  bg-brand-500 px-6 py-4 rounded-xl">
-      </div>
+      <div id="navContainer" class="w-full flex flex-wrap justify-center gap-4"></div>
     </div>
   `;
   container.append(toolbar);
@@ -83,12 +80,14 @@ export function MenuGrid(container) {
   function renderItems() {
     grid.innerHTML = "";
 
+    // AED currency formatter
     const fmt = new Intl.NumberFormat("en-AE", {
       style: "currency",
       currency: "AED",
       minimumFractionDigits: 0
     });
 
+    // apply filters
     let items = allItems.filter(item =>
       currentCat === "ALL" || item.category.toUpperCase() === currentCat
     );
@@ -99,12 +98,14 @@ export function MenuGrid(container) {
       );
     }
 
+    // build cards
     items.forEach(item => {
       const { name, desc, imageUrl, category, price, priceWithChai } = item;
       const card = document.createElement("div");
-      card.className =
-        "group relative bg-white rounded-2xl shadow-lg overflow-hidden " +
-        "transition transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105";
+      card.className = [
+        "group relative bg-white rounded-2xl shadow-lg overflow-hidden",
+        "transition transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105"
+      ].join(" ");
 
       card.innerHTML = `
         <div class="relative h-56 overflow-hidden">
@@ -120,7 +121,13 @@ export function MenuGrid(container) {
           </span>
           <h3 class="text-3xl uppercase font-bold text-neutral-900 mb-2">${name}</h3>
           <p class="text-neutral-700 text-base">${desc}</p>
-          <p class="mt-4 text-xl font-semibold text-neutral-900">${fmt.format(price)}</p>
+
+          <!-- Main price in AED -->
+          <p class="mt-4 text-xl font-semibold text-neutral-900">
+            ${fmt.format(price)}
+          </p>
+
+          <!-- Optional “with chai” price -->
           ${
             priceWithChai != null
               ? `<p class="mt-1 text-sm italic text-neutral-700">
@@ -148,6 +155,8 @@ export function MenuGrid(container) {
       "fixed bottom-4 right-4 flex items-center justify-center gap-1 " +
       "p-3 rounded-full bg-brand-500 text-white shadow-lg " +
       "opacity-0 pointer-events-none transition-opacity duration-300";
+
+    // initial content: arrow + percent
     btn.innerHTML = `
       <span class="text-xl leading-none">↑</span>
       <span id="scrollPercent" class="text-sm">0%</span>
