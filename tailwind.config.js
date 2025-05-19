@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-   darkMode: 'class', 
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,jsx}"
@@ -11,8 +11,8 @@ module.exports = {
         sans: ["Rubik", "sans-serif"],
       },
       colors: {
-         colors: {
-       white: 'rgba(24, 104, 115, 0.1)',
+        // Override default “white” to a 10%-opaque #186873
+        white: 'rgba(24, 104, 115, 0.1)',
         brand: {
           50:  "#f3faf7",
           100: "#daf3e6",
@@ -39,4 +39,3 @@ module.exports = {
     require("@tailwindcss/typography"),
   ],
 };
-
