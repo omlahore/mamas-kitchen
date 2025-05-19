@@ -20,7 +20,7 @@ export function CategoryNav(container, categories = []) {
 
     // 4️⃣ Active vs. inactive styles
     btn.className = [
-      "px-6 py-3 text-lg font-semibold rounded-full border transition",
+      "px-6 py-3 text-lg font-heading rounded-full border transition",
       i === 0
         // Active tab: solid teal bg, white text, teal border
         ? "bg-brand-500 text-white border-brand-500"
