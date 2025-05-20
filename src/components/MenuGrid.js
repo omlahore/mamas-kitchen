@@ -101,7 +101,7 @@ export function MenuGrid(container) {
 
       const card = document.createElement("div");
       card.className = [
-        "group relative bg-brand-500 rounded-2xl shadow-lg overflow-hidden",
+        "group relative bg-brand-500/5 rounded-2xl shadow-lg overflow-hidden",
         "flex flex-col",                            // stack image + content
         "transition transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105"
       ].join(" ");
@@ -117,7 +117,7 @@ export function MenuGrid(container) {
                       opacity-0 group-hover:opacity-100
                       transition-opacity duration-300"></div>
         </div>
-        <div class="p-6 flex flex-col justify-between flex-grow text-center font-sans text-white">
+        <div class="p-6 flex flex-col justify-between flex-grow text-center font-sans text-black">
           <!-- Top block: category, title, description -->
           <div>
             <span class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold
@@ -127,7 +127,7 @@ export function MenuGrid(container) {
             <h3 class="text-3xl uppercase font-heading mb-2 text-[#C19462]">
               ${name}
             </h3>
-            <p class="text-white text-base mb-4">${desc}</p>
+            <p class="text-black text-base mb-4">${desc}</p>
           </div>
           <!-- Bottom block: prices stuck at bottom -->
           <div>

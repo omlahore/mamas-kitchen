@@ -35,7 +35,8 @@ export function HeroCarousel(container) {
  <img
     src="/logo.png"
     alt="Mama’s Kitchen Logo"
-    class="h-48 sm:h-64 md:h-80 lg:h-96 xl:h-[28rem] drop-shadow-lg"
+    class="h-40 sm:h-52 md:h-64 lg:h-72 xl:h-[24rem] drop-shadow-lg"
+
   />
   `;
   wrapper.append(title);
