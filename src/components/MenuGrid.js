@@ -1,5 +1,3 @@
-// src/components/MenuGrid.js
-
 import { gsap } from "gsap";
 import { HeroCarousel } from "./HeroCarousel.js";
 import { CategoryNav } from "./CategoryNav.js";
@@ -35,7 +33,7 @@ export function MenuGrid(container) {
           <line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
       </div>
-      <div id="navContainer" class="w-full flex flex-wrap justify-center gap-4"></div>
+      <div id="navContainer" class="w-full flex flex-col items-center gap-2"></div>
     </div>
   `;
   container.append(toolbar);
@@ -47,8 +45,9 @@ export function MenuGrid(container) {
   container.append(grid);
 
   // 4️⃣ Local state
-  let allItems      = [];
-  let currentCat    = "ALL";
+  let allItems = [];
+  let currentCat = "ALL";
+  let currentSub = "";
   let currentSearch = "";
 
   // 5️⃣ Search handler
@@ -61,10 +60,18 @@ export function MenuGrid(container) {
   // 6️⃣ Category-change listener
   toolbar.addEventListener("categoryChange", e => {
     currentCat = e.detail.toUpperCase();
+    // reset sub selection on main change
+    currentSub = "";
     renderItems();
   });
 
-  // 7️⃣ Firestore subscription & dynamic nav build
+  // 7️⃣ Subcategory-change listener
+  toolbar.addEventListener("subcategoryChange", e => {
+    currentSub = e.detail;
+    renderItems();
+  });
+
+  // 8️⃣ Firestore subscription & dynamic nav build
   const q = query(collection(db, "menuItems"), orderBy("createdAt", "desc"));
   onSnapshot(q, snap => {
     allItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -73,21 +80,28 @@ export function MenuGrid(container) {
     renderItems();
   });
 
-  // 8️⃣ Render & animate
+  // 9️⃣ Render & animate
   function renderItems() {
     grid.innerHTML = "";
 
-    // AED currency formatter
+    // Currency formatter
     const fmt = new Intl.NumberFormat("en-AE", {
       style: "currency",
       currency: "AED",
       minimumFractionDigits: 0
     });
 
-    // apply filters
+    // apply main category filter
     let items = allItems.filter(item =>
       currentCat === "ALL" || item.category.toUpperCase() === currentCat
     );
+
+    // apply subcategory filter (requires item.subcategory field)
+    if (currentSub) {
+      items = items.filter(item => item.subcategory === currentSub);
+    }
+
+    // apply search filter
     if (currentSearch) {
       items = items.filter(item =>
         item.name.toLowerCase().includes(currentSearch) ||
@@ -102,7 +116,7 @@ export function MenuGrid(container) {
       const card = document.createElement("div");
       card.className = [
         "group relative bg-brand-500/5 rounded-2xl shadow-lg overflow-hidden",
-        "flex flex-col",                            // stack image + content
+        "flex flex-col",
         "transition transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105"
       ].join(" ");
 
@@ -118,7 +132,6 @@ export function MenuGrid(container) {
                       transition-opacity duration-300"></div>
         </div>
         <div class="p-6 flex flex-col justify-between flex-grow text-center font-sans text-black">
-          <!-- Top block: category, title, description -->
           <div>
             <span class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold
                          px-3 py-1 rounded-full uppercase tracking-wide mb-4">
@@ -129,7 +142,6 @@ export function MenuGrid(container) {
             </h3>
             <p class="text-black text-base mb-4">${desc}</p>
           </div>
-          <!-- Bottom block: prices stuck at bottom -->
           <div>
             <p class="text-xl font-semibold mb-1">
               ${fmt.format(price)}
@@ -155,7 +167,7 @@ export function MenuGrid(container) {
     );
   }
 
-  // ➉ Scroll-to-Top button with progress indicator
+  // 🔟 Scroll-to-Top button with progress indicator
   (function addScrollToTopButton() {
     const btn = document.createElement("button");
     btn.id = "scrollToTopBtn";
