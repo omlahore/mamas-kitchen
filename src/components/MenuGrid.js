@@ -1,3 +1,5 @@
+// src/components/MenuGrid.js
+
 import { gsap } from "gsap";
 import { HeroCarousel } from "./HeroCarousel.js";
 import { CategoryNav } from "./CategoryNav.js";
@@ -14,11 +16,12 @@ export function MenuGrid(container) {
   container.innerHTML = "";
   HeroCarousel(container);
 
-  // 2️⃣ Glass-blur toolbar (search + dynamic tabs)
+  // 2️⃣ Glass-blur toolbar (search + sort + dynamic tabs)
   const toolbar = document.createElement("div");
   toolbar.className = "sticky top-0 z-20 bg-brand-500/10 backdrop-blur-md shadow-md";
   toolbar.innerHTML = `
     <div class="container mx-auto px-6 py-6 flex flex-col items-center gap-6">
+      <!-- Search -->
       <div class="relative w-full max-w-xl">
         <input id="searchInput"
                type="text"
@@ -33,6 +36,19 @@ export function MenuGrid(container) {
           <line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
       </div>
+
+      <!-- Sort -->
+      <div class="w-full flex justify-end">
+        <select id="sortSelect"
+                class="px-4 py-2 rounded-full border border-white/30 bg-white/50
+                       focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
+          <option value="">Sort</option>
+          <option value="name">Name: A → Z</option>
+          <option value="price">Price: Low → High</option>
+        </select>
+      </div>
+
+      <!-- Category & Subcategory navs -->
       <div id="navContainer" class="w-full flex flex-col items-center gap-2"></div>
     </div>
   `;
@@ -49,6 +65,7 @@ export function MenuGrid(container) {
   let currentCat = "ALL";
   let currentSub = "";
   let currentSearch = "";
+  let currentSort = "";
 
   // 5️⃣ Search handler
   const searchEl = toolbar.querySelector("#searchInput");
@@ -57,21 +74,27 @@ export function MenuGrid(container) {
     renderItems();
   });
 
-  // 6️⃣ Category-change listener
-  toolbar.addEventListener("categoryChange", e => {
-    currentCat = e.detail.toUpperCase();
-    // reset sub selection on main change
-    currentSub = "";
+  // 6️⃣ Sort handler
+  const sortEl = toolbar.querySelector("#sortSelect");
+  sortEl.addEventListener("change", e => {
+    currentSort = e.target.value;
     renderItems();
   });
 
-  // 7️⃣ Subcategory-change listener
+  // 7️⃣ Category-change listener
+  toolbar.addEventListener("categoryChange", e => {
+    currentCat = e.detail.toUpperCase();
+    currentSub = "";            // reset sub on main category change
+    renderItems();
+  });
+
+  // 8️⃣ Subcategory-change listener
   toolbar.addEventListener("subcategoryChange", e => {
     currentSub = e.detail;
     renderItems();
   });
 
-  // 8️⃣ Firestore subscription & dynamic nav build
+  // 9️⃣ Firestore subscription & dynamic nav build
   const q = query(collection(db, "menuItems"), orderBy("createdAt", "desc"));
   onSnapshot(q, snap => {
     allItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -80,7 +103,7 @@ export function MenuGrid(container) {
     renderItems();
   });
 
-  // 9️⃣ Render & animate
+  // 🔟 Render & animate
   function renderItems() {
     grid.innerHTML = "";
 
@@ -91,17 +114,17 @@ export function MenuGrid(container) {
       minimumFractionDigits: 0
     });
 
-    // apply main category filter
+    // 1) apply main category filter
     let items = allItems.filter(item =>
       currentCat === "ALL" || item.category.toUpperCase() === currentCat
     );
 
-    // apply subcategory filter (requires item.subcategory field)
+    // 2) apply subcategory filter
     if (currentSub) {
       items = items.filter(item => item.subcategory === currentSub);
     }
 
-    // apply search filter
+    // 3) apply search filter
     if (currentSearch) {
       items = items.filter(item =>
         item.name.toLowerCase().includes(currentSearch) ||
@@ -109,10 +132,16 @@ export function MenuGrid(container) {
       );
     }
 
-    // build cards
+    // 4) apply sorting
+    if (currentSort === "name") {
+      items.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (currentSort === "price") {
+      items.sort((a, b) => a.price - b.price);
+    }
+
+    // 5) build cards
     items.forEach(item => {
       const { name, desc, imageUrl, category, price, priceWithChai } = item;
-
       const card = document.createElement("div");
       card.className = [
         "group relative bg-brand-500/5 rounded-2xl shadow-lg overflow-hidden",
@@ -156,7 +185,6 @@ export function MenuGrid(container) {
           </div>
         </div>
       `;
-
       grid.append(card);
     });
 
@@ -167,7 +195,7 @@ export function MenuGrid(container) {
     );
   }
 
-  // 🔟 Scroll-to-Top button with progress indicator
+  // ⓫ Scroll-to-Top button (unchanged) …
   (function addScrollToTopButton() {
     const btn = document.createElement("button");
     btn.id = "scrollToTopBtn";
@@ -175,7 +203,6 @@ export function MenuGrid(container) {
       "fixed bottom-4 right-4 flex items-center justify-center gap-1 " +
       "p-3 rounded-full bg-brand-500 text-white shadow-lg " +
       "opacity-0 pointer-events-none transition-opacity duration-300";
-
     btn.innerHTML = `
       <span class="text-xl leading-none">↑</span>
       <span id="scrollPercent" class="text-sm">0%</span>
@@ -190,7 +217,6 @@ export function MenuGrid(container) {
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
       const pct = maxScroll > 0 ? Math.round((scrollY / maxScroll) * 100) : 0;
       btn.querySelector("#scrollPercent").textContent = `${pct}%`;
-
       if (scrollY > 300) {
         btn.classList.remove("opacity-0", "pointer-events-none");
         btn.classList.add("opacity-100", "pointer-events-auto");
