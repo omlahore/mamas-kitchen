@@ -9,7 +9,7 @@ export function CategoryNav(container, categories = []) {
   // Hardcoded subcategory map
    const subcatMap = {
     ALL:       [],
-    LUNCH:     ['Mains', 'Chaat', 'Super Salad', 'Bites', 'Wraps & Toasties'],
+    LUNCH:     ['Chaat','Bites','Wraps & Toasties','Super Salad','Mains'],
     BREAKFAST: [],            // no subcategories for breakfast
   };
   // Clear container
