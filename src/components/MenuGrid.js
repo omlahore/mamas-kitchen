@@ -16,138 +16,134 @@ export function MenuGrid(container) {
   container.innerHTML = "";
   HeroCarousel(container);
 
-  // 2️⃣ Glass-blur toolbar
+  // 2️⃣ Prepare toolbar container with placeholders
   const toolbar = document.createElement("div");
-  toolbar.className = "bg-brand-500/10 backdrop-blur-md shadow-md";
+  toolbar.className = "container mx-auto px-6 py-4";
   toolbar.innerHTML = `
-    <div class="container mx-auto px-6 py-6 flex flex-col items-center gap-6">
-      <!-- Search -->
-      <div class="relative w-full max-w-xl">
-        <input id="searchInput" type="text" placeholder="Search dishes..."
-               class="w-full pl-12 pr-4 py-3 bg-white/50 backdrop-blur-sm placeholder-gray-500 rounded-full border border-white/30
-                      focus:outline-none focus:ring-2 focus:ring-brand-500 transition" />
-        <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
-             width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
-             viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="8"/>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-      </div>
+    <!-- navContainer is where CategoryNav will render mainNav+subNav -->
+    <div id="navContainer"></div>
 
-      <!-- Sort -->
-      <div class="w-full flex justify-end">
-        <select id="sortSelect"
-                class="px-4 py-2 rounded-full border border-white/30 bg-white/50
-                       focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
-          <option value="">Sort</option>
-          <option value="name">Name: A → Z</option>
-          <option value="price">Price: Low → High</option>
-        </select>
-      </div>
-
-      <!-- Category & Subcategory navs -->
-      <div id="navContainer" class="w-full flex flex-col items-center gap-2"></div>
-    </div>
+    <!-- temporary Sort placement; we'll reparent it into mainNav -->
+    <select id="sortSelect"
+            class="mt-4 px-4 py-2 rounded-full border border-white/30 bg-white/50
+                   focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
+      <option value="">Sort</option>
+      <option value="name">Name: A → Z</option>
+      <option value="price">Price: Low → High</option>
+    </select>
   `;
   container.append(toolbar);
 
   // 3️⃣ Grid container
   const grid = document.createElement("div");
   grid.id = "menuGrid";
-  grid.className = "container mx-auto px-6 py-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3";
+  grid.className =
+    "container mx-auto px-6 py-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3";
   container.append(grid);
 
   // 4️⃣ Local state
   let allItems = [];
   let currentCat = "ALL";
   let currentSub = "";
-  let currentSearch = "";
   let currentSort = "";
 
-  // 5️⃣ Search handler
-  toolbar.querySelector("#searchInput")
-    .addEventListener("input", e => {
-      currentSearch = e.target.value.trim().toLowerCase();
-      renderItems();
-    });
-
-  // 6️⃣ Sort handler
-  toolbar.querySelector("#sortSelect")
-    .addEventListener("change", e => {
+  // 5️⃣ Sort handler
+  toolbar
+    .querySelector("#sortSelect")
+    .addEventListener("change", (e) => {
       currentSort = e.target.value;
       renderItems();
     });
 
-  // 7️⃣ Category-change listener
-  toolbar.addEventListener("categoryChange", e => {
+  // 6️⃣ Category & subcategory listeners
+  toolbar.addEventListener("categoryChange", (e) => {
     currentCat = e.detail.toUpperCase();
-    currentSub = "";            // reset sub on main category change
+    currentSub = "";
     renderItems();
   });
-
-  // 8️⃣ Subcategory-change listener
-  toolbar.addEventListener("subcategoryChange", e => {
+  toolbar.addEventListener("subcategoryChange", (e) => {
     currentSub = e.detail;
     renderItems();
   });
 
-  // 9️⃣ Firestore subscription & dynamic nav build
-  const q = query(collection(db, "menuItems"), orderBy("createdAt", "desc"));
-  onSnapshot(q, snap => {
-    allItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    const cats = Array.from(new Set(allItems.map(i => i.category)));
-    CategoryNav(toolbar.querySelector("#navContainer"), ["All", ...cats]);
+  // 7️⃣ Firestore subscription & dynamic nav build
+  const q = query(
+    collection(db, "menuItems"),
+    orderBy("createdAt", "desc")
+  );
+  onSnapshot(q, (snap) => {
+    allItems = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const cats = Array.from(new Set(allItems.map((i) => i.category)));
+
+    // Render nav into #navContainer
+    CategoryNav(
+      toolbar.querySelector("#navContainer"),
+      ["All", ...cats]
+    );
+
+    // Now *pull* the Sort element into that first row (mainNav)
+    const navContainer = toolbar.querySelector("#navContainer");
+    const mainNav = navContainer.querySelector("div"); // first child is mainNav
+    if (mainNav) {
+      // 1) switch to space-between, center alignment
+      mainNav.classList.replace("justify-center", "justify-between");
+      mainNav.classList.add("items-center");
+
+      // 2) wrap existing <button> siblings into a left-side flex group
+      const buttons = Array.from(mainNav.querySelectorAll("button"));
+      const leftGroup = document.createElement("div");
+      // stretch and center the buttons
+      leftGroup.className = "w-full flex flex-wrap justify-center items-center gap-4";
+      buttons.forEach((b) => leftGroup.appendChild(b));
+
+      // 3) clear mainNav, then re-append [leftGroup, sort]
+      mainNav.innerHTML = "";
+      mainNav.appendChild(leftGroup);
+
+      const sortEl = toolbar.querySelector("#sortSelect");
+     sortEl.classList.remove("mt-4");
+  mainNav.classList.add("relative");
+sortEl.classList.add("absolute", "right-4", "top-1/2", "-translate-y-1/2");
+      mainNav.appendChild(sortEl);
+    }
+
     renderItems();
   });
 
-  // 🔟 Render & animate
+  // 8️⃣ Render & animate
   function renderItems() {
     grid.innerHTML = "";
-
-    // Currency formatter
     const fmt = new Intl.NumberFormat("en-AE", {
       style: "currency",
       currency: "AED",
-      minimumFractionDigits: 0
+      minimumFractionDigits: 0,
     });
 
-    // 1) main category filter
-    let items = allItems.filter(item =>
-      currentCat === "ALL" || item.category.toUpperCase() === currentCat
+    // a) main category filter
+    let items = allItems.filter(
+      (i) => currentCat === "ALL" || i.category.toUpperCase() === currentCat
     );
 
-    // 2) subcategory filter (string or array)
+    // b) subcategory filter
     if (currentSub) {
-      if (Array.isArray(currentSub)) {
-        items = items.filter(item => currentSub.includes(item.subcategory));
-      } else {
-        items = items.filter(item => item.subcategory === currentSub);
-      }
+      items = Array.isArray(currentSub)
+        ? items.filter((i) => currentSub.includes(i.subcategory))
+        : items.filter((i) => i.subcategory === currentSub);
     }
 
-    // 3) search filter
-    if (currentSearch) {
-      items = items.filter(item =>
-        item.name.toLowerCase().includes(currentSearch) ||
-        item.desc.toLowerCase().includes(currentSearch)
-      );
-    }
-
-    // 4) sorting
+    // c) sorting
     if (currentSort === "name") {
       items.sort((a, b) => a.name.localeCompare(b.name));
     } else if (currentSort === "price") {
       items.sort((a, b) => a.price - b.price);
     }
 
-    // 5) build cards
-    items.forEach(item => {
+    // d) build cards
+    items.forEach((item) => {
       const { name, desc, imageUrl, category, price, priceWithChai } = item;
       const card = document.createElement("div");
-      card.className = [
-        "group relative bg-brand-500/5 rounded-2xl shadow-lg overflow-hidden",
-        "flex flex-col transition transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105"
-      ].join(" ");
+      card.className =
+        "group relative bg-brand-500/5 rounded-2xl shadow-lg overflow-hidden flex flex-col transition transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105";
       card.innerHTML = `
         <div class="relative h-56 overflow-hidden">
           <img src="${imageUrl}" alt="${name}"
@@ -163,10 +159,16 @@ export function MenuGrid(container) {
             <p class="text-base mb-4">${desc}</p>
           </div>
           <div>
-            <p class="text-xl font-semibold mb-1">${fmt.format(price)}</p>
-            ${priceWithChai != null
-              ? `<p class="text-sm italic">${fmt.format(priceWithChai)} with chai</p>`
-              : ``}
+            <p class="text-xl font-semibold mb-1">${fmt.format(
+              price
+            )}</p>
+            ${
+              priceWithChai != null
+                ? `<p class="text-sm italic">${fmt.format(
+                    priceWithChai
+                  )} with chai</p>`
+                : ``
+            }
           </div>
         </div>
       `;
@@ -180,7 +182,7 @@ export function MenuGrid(container) {
     );
   }
 
-  // ⓫ Scroll-to-Top button (unchanged) …
+  // 9️⃣ Scroll-to-Top button
   (function addScrollToTopButton() {
     const btn = document.createElement("button");
     btn.id = "scrollToTopBtn";
@@ -199,15 +201,24 @@ export function MenuGrid(container) {
 
     window.addEventListener("scroll", () => {
       const scrollY = window.scrollY;
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const maxScroll =
+        document.documentElement.scrollHeight -
+        window.innerHeight;
       const pct = maxScroll > 0 ? Math.round((scrollY / maxScroll) * 100) : 0;
       btn.querySelector("#scrollPercent").textContent = `${pct}%`;
+
       if (scrollY > 300) {
         btn.classList.replace("opacity-0", "opacity-100");
-        btn.classList.replace("pointer-events-none", "pointer-events-auto");
+        btn.classList.replace(
+          "pointer-events-none",
+          "pointer-events-auto"
+        );
       } else {
         btn.classList.replace("opacity-100", "opacity-0");
-        btn.classList.replace("pointer-events-auto", "pointer-events-none");
+        btn.classList.replace(
+          "pointer-events-auto",
+          "pointer-events-none"
+        );
       }
     });
   })();
