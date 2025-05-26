@@ -18,6 +18,7 @@ export function MenuGrid(container) {
 
   // 2️⃣ Glass-blur toolbar (search + sort + dynamic tabs)
   const toolbar = document.createElement("div");
+  //removed the sticky navbar
   toolbar.className = "bg-brand-500/10 backdrop-blur-md shadow-md";
   toolbar.innerHTML = `
     <div class="container mx-auto px-6 py-6 flex flex-col items-center gap-6">
