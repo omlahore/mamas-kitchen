@@ -7,13 +7,12 @@ export function CategoryNav(container, categories = []) {
     .map(n => n.trim());
 
   // Hardcoded subcategory map
-  const subcatMap = {
+   const subcatMap = {
     ALL:       ['Wraps & Toasties', 'Super Salad', 'Desserts', 'Drinks'],
-    LUNCH:     ['Wraps & Toasties', 'Super Salad', 'Desserts', 'Drinks'],
+    LUNCH:     ['Mains', 'Chaat', 'Super Salad', 'Bites', 'Wraps & Toasties'],
     DINNER:    ['Wraps & Toasties', 'Super Salad', 'Desserts', 'Drinks'],
-    BREAKFAST: ['Bites'],
+    BREAKFAST: [],            // no subcategories for breakfast
   };
-
   // Clear container
   container.innerHTML = '';
   container.className = 'w-full flex flex-col items-center gap-4';
@@ -21,14 +20,14 @@ export function CategoryNav(container, categories = []) {
   // Create main nav bar
   const mainNav = document.createElement('div');
   mainNav.className =
-    'w-full flex flex-wrap justify-center gap-4 ' +
+    'w-full flex flex-wrap justify-center gap-4 '  
     'bg-brand-500/10 p-4 rounded-xl';
   container.appendChild(mainNav);
 
   // Create sub nav bar
   const subNav = document.createElement('div');
   subNav.className =
-    'w-full flex flex-wrap justify-center gap-2 ' +
+    'w-full flex flex-wrap justify-center gap-2 '  
     'bg-brand-500/5 p-2 rounded-lg';
   container.appendChild(subNav);
 
@@ -40,7 +39,7 @@ export function CategoryNav(container, categories = []) {
     const key = mainName.toUpperCase();
     const subs = subcatMap[key] || [];
 
-    // Collapse “Desserts” + “Drinks” into one
+    // Collapse “Desserts”   “Drinks” into one
     const toRender = (subs.includes('Desserts') && subs.includes('Drinks'))
       ? subs.filter(s => s !== 'Desserts' && s !== 'Drinks').concat('Desserts & Drinks')
       : subs.slice();
