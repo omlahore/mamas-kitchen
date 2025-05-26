@@ -19,19 +19,21 @@ export function MenuGrid(container) {
   // 2️⃣ Prepare toolbar container with placeholders
   const toolbar = document.createElement("div");
   toolbar.className = "container mx-auto px-6 py-4";
-  toolbar.innerHTML = `
-    <!-- navContainer is where CategoryNav will render mainNav+subNav -->
-    <div id="navContainer"></div>
+toolbar.innerHTML = `
+  <div class="bg-brand-500/10 backdrop-blur-md shadow-md p-4 rounded-xl flex flex-wrap items-center justify-between gap-4">
+    <!-- CategoryNav will render its mainNav+subNav here -->
+    <div id="navContainer" class="flex-1"></div>
 
-    <!-- temporary Sort placement; we'll reparent it into mainNav -->
+    <!-- Sort dropdown -->
     <select id="sortSelect"
-            class="mt-4 px-4 py-2 rounded-full border border-white/30 bg-white/50
+            class="px-4 py-2 rounded-full border border-white/30 bg-white/50
                    focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
       <option value="">Sort</option>
       <option value="name">Name: A → Z</option>
       <option value="price">Price: Low → High</option>
     </select>
-  `;
+  </div>
+`;
   container.append(toolbar);
 
   // 3️⃣ Grid container
