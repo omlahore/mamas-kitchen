@@ -4,7 +4,7 @@ import { gsap } from "gsap";
 
 export function HeroCarousel(container) {
   // 1) Image URLs
-  const images = ["/hero1.jpg", "/hero2.jpg", "/hero3.jpg"];
+  const images = ["/hero3.jpg"];
 
   // 2) Wrapper
   const wrapper = document.createElement("div");
