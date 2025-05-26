@@ -16,19 +16,15 @@ export function MenuGrid(container) {
   container.innerHTML = "";
   HeroCarousel(container);
 
-  // 2️⃣ Glass-blur toolbar (search + sort + dynamic tabs)
+  // 2️⃣ Glass-blur toolbar
   const toolbar = document.createElement("div");
-  //removed the sticky navbar
   toolbar.className = "bg-brand-500/10 backdrop-blur-md shadow-md";
   toolbar.innerHTML = `
     <div class="container mx-auto px-6 py-6 flex flex-col items-center gap-6">
       <!-- Search -->
       <div class="relative w-full max-w-xl">
-        <input id="searchInput"
-               type="text"
-               placeholder="Search dishes..."
-               class="w-full pl-12 pr-4 py-3 bg-white/50 backdrop-blur-sm
-                      placeholder-gray-500 rounded-full border border-white/30
+        <input id="searchInput" type="text" placeholder="Search dishes..."
+               class="w-full pl-12 pr-4 py-3 bg-white/50 backdrop-blur-sm placeholder-gray-500 rounded-full border border-white/30
                       focus:outline-none focus:ring-2 focus:ring-brand-500 transition" />
         <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
              width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
@@ -69,18 +65,18 @@ export function MenuGrid(container) {
   let currentSort = "";
 
   // 5️⃣ Search handler
-  const searchEl = toolbar.querySelector("#searchInput");
-  searchEl.addEventListener("input", e => {
-    currentSearch = e.target.value.trim().toLowerCase();
-    renderItems();
-  });
+  toolbar.querySelector("#searchInput")
+    .addEventListener("input", e => {
+      currentSearch = e.target.value.trim().toLowerCase();
+      renderItems();
+    });
 
   // 6️⃣ Sort handler
-  const sortEl = toolbar.querySelector("#sortSelect");
-  sortEl.addEventListener("change", e => {
-    currentSort = e.target.value;
-    renderItems();
-  });
+  toolbar.querySelector("#sortSelect")
+    .addEventListener("change", e => {
+      currentSort = e.target.value;
+      renderItems();
+    });
 
   // 7️⃣ Category-change listener
   toolbar.addEventListener("categoryChange", e => {
@@ -115,17 +111,21 @@ export function MenuGrid(container) {
       minimumFractionDigits: 0
     });
 
-    // 1) apply main category filter
+    // 1) main category filter
     let items = allItems.filter(item =>
       currentCat === "ALL" || item.category.toUpperCase() === currentCat
     );
 
-    // 2) apply subcategory filter
+    // 2) subcategory filter (string or array)
     if (currentSub) {
-      items = items.filter(item => item.subcategory === currentSub);
+      if (Array.isArray(currentSub)) {
+        items = items.filter(item => currentSub.includes(item.subcategory));
+      } else {
+        items = items.filter(item => item.subcategory === currentSub);
+      }
     }
 
-    // 3) apply search filter
+    // 3) search filter
     if (currentSearch) {
       items = items.filter(item =>
         item.name.toLowerCase().includes(currentSearch) ||
@@ -133,7 +133,7 @@ export function MenuGrid(container) {
       );
     }
 
-    // 4) apply sorting
+    // 4) sorting
     if (currentSort === "name") {
       items.sort((a, b) => a.name.localeCompare(b.name));
     } else if (currentSort === "price") {
@@ -146,43 +146,27 @@ export function MenuGrid(container) {
       const card = document.createElement("div");
       card.className = [
         "group relative bg-brand-500/5 rounded-2xl shadow-lg overflow-hidden",
-        "flex flex-col",
-        "transition transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105"
+        "flex flex-col transition transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105"
       ].join(" ");
-
       card.innerHTML = `
         <div class="relative h-56 overflow-hidden">
           <img src="${imageUrl}" alt="${name}"
-               class="w-full h-full object-cover
-                      transition-transform duration-500
-                      group-hover:scale-105"/>
-          <div class="absolute inset-0
-                      bg-gradient-to-t from-black/40 to-transparent
-                      opacity-0 group-hover:opacity-100
-                      transition-opacity duration-300"></div>
+               class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         </div>
         <div class="p-6 flex flex-col justify-between flex-grow text-center font-sans text-black">
           <div>
-            <span class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold
-                         px-3 py-1 rounded-full uppercase tracking-wide mb-4">
+            <span class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide mb-4">
               ${category}
             </span>
-            <h3 class="text-3xl uppercase font-heading mb-2 text-[#C19462]">
-              ${name}
-            </h3>
-            <p class="text-black text-base mb-4">${desc}</p>
+            <h3 class="text-3xl uppercase font-heading mb-2 text-[#C19462]">${name}</h3>
+            <p class="text-base mb-4">${desc}</p>
           </div>
           <div>
-            <p class="text-xl font-semibold mb-1">
-              ${fmt.format(price)}
-            </p>
-            ${
-              priceWithChai != null
-                ? `<p class="text-sm italic">
-                     ${fmt.format(priceWithChai)} with chai
-                   </p>`
-                : ``
-            }
+            <p class="text-xl font-semibold mb-1">${fmt.format(price)}</p>
+            ${priceWithChai != null
+              ? `<p class="text-sm italic">${fmt.format(priceWithChai)} with chai</p>`
+              : ``}
           </div>
         </div>
       `;
@@ -219,11 +203,11 @@ export function MenuGrid(container) {
       const pct = maxScroll > 0 ? Math.round((scrollY / maxScroll) * 100) : 0;
       btn.querySelector("#scrollPercent").textContent = `${pct}%`;
       if (scrollY > 300) {
-        btn.classList.remove("opacity-0", "pointer-events-none");
-        btn.classList.add("opacity-100", "pointer-events-auto");
+        btn.classList.replace("opacity-0", "opacity-100");
+        btn.classList.replace("pointer-events-none", "pointer-events-auto");
       } else {
-        btn.classList.add("opacity-0", "pointer-events-none");
-        btn.classList.remove("opacity-100", "pointer-events-auto");
+        btn.classList.replace("opacity-100", "opacity-0");
+        btn.classList.replace("pointer-events-auto", "pointer-events-none");
       }
     });
   })();
