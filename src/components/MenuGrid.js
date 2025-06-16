@@ -4,12 +4,60 @@ import { gsap } from "gsap";
 import { HeroCarousel } from "./HeroCarousel.js";
 import { CategoryNav } from "./CategoryNav.js";
 import { db } from "../firebaseConfig.js";
-import {
-  collection,
-  onSnapshot,
-  query,
-  orderBy
-} from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+
+// ➤ Helper: builds a card element for a given item
+function createCardElement(item, modal) {
+  const { name, desc, imageUrl, category, price, priceWithChai } = item;
+  const fmt = new Intl.NumberFormat("en-AE", {
+    style: "currency",
+    currency: "AED",
+    minimumFractionDigits: 0,
+  });
+
+  const card = document.createElement("div");
+  card.className =
+    "group relative bg-brand-500/5 rounded-2xl shadow-lg overflow-hidden " +
+    "flex flex-col transition-transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105";
+
+  card.innerHTML = `
+    <div class="relative h-56 overflow-hidden cursor-pointer">
+      <img src="${imageUrl}" alt="${name}"
+           class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent
+                  opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    </div>
+    <div class="p-6 flex flex-col justify-between flex-grow text-center font-sans text-black">
+      <div>
+        <span class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold
+                     px-3 py-1 rounded-full uppercase tracking-wide mb-4">
+          ${category}
+        </span>
+        <h3 class="text-3xl uppercase font-heading mb-2 text-[#C19462]">${name}</h3>
+        <p class="text-base mb-4">${desc}</p>
+      </div>
+      <div>
+        <p class="text-xl font-semibold mb-1">${fmt.format(price)}</p>
+        ${
+          priceWithChai != null
+            ? `<p class="text-sm italic">${fmt.format(
+                priceWithChai
+              )} with chai</p>`
+            : ``
+        }
+      </div>
+    </div>
+  `;
+
+  card.querySelector(".relative.h-56").addEventListener("click", () => {
+    if (imageUrl) {
+      modal.querySelector("#modalImg").src = imageUrl;
+      modal.classList.remove("hidden");
+    }
+  });
+
+  return card;
+}
 
 export function MenuGrid(container) {
   // ❇️ LIGHTBOX MODAL SETUP
@@ -30,8 +78,7 @@ export function MenuGrid(container) {
   document.body.append(modal);
 
   // Close modal
-  modal.addEventListener("click", e => {
-    // if click outside image or on close button
+  modal.addEventListener("click", (e) => {
     if (e.target.id === "imageModal" || e.target.id === "closeModal") {
       modal.classList.add("hidden");
       modal.querySelector("#modalImg").src = "";
@@ -73,29 +120,27 @@ export function MenuGrid(container) {
   let currentSort = "";
 
   // 5️⃣ Sort handler
-  toolbar
-    .querySelector("#sortSelect")
-    .addEventListener("change", e => {
-      currentSort = e.target.value;
-      renderItems();
-    });
+  toolbar.querySelector("#sortSelect").addEventListener("change", (e) => {
+    currentSort = e.target.value;
+    renderItems();
+  });
 
   // 6️⃣ Category & subcategory listeners
-  toolbar.addEventListener("categoryChange", e => {
+  toolbar.addEventListener("categoryChange", (e) => {
     currentCat = e.detail.toUpperCase();
     currentSub = "";
     renderItems();
   });
-  toolbar.addEventListener("subcategoryChange", e => {
+  toolbar.addEventListener("subcategoryChange", (e) => {
     currentSub = e.detail;
     renderItems();
   });
 
   // 7️⃣ Firestore subscription & nav build
   const q = query(collection(db, "menuItems"), orderBy("createdAt", "desc"));
-  onSnapshot(q, snap => {
-    allItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    const cats = Array.from(new Set(allItems.map(i => i.category)));
+  onSnapshot(q, (snap) => {
+    allItems = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const cats = Array.from(new Set(allItems.map((i) => i.category)));
     CategoryNav(toolbar.querySelector("#navContainer"), ["All", ...cats]);
 
     // Reparent Sort into first nav row for layout
@@ -107,15 +152,21 @@ export function MenuGrid(container) {
 
       const buttons = Array.from(mainNav.querySelectorAll("button"));
       const leftGroup = document.createElement("div");
-      leftGroup.className = "w-full flex flex-wrap justify-center items-center gap-4";
-      buttons.forEach(b => leftGroup.appendChild(b));
+      leftGroup.className =
+        "w-full flex flex-wrap justify-center items-center gap-4";
+      buttons.forEach((b) => leftGroup.appendChild(b));
 
       mainNav.innerHTML = "";
       mainNav.appendChild(leftGroup);
 
       const sortEl = toolbar.querySelector("#sortSelect");
       sortEl.classList.remove("mt-4");
-      sortEl.classList.add("absolute", "right-4", "top-1/2", "-translate-y-1/2");
+      sortEl.classList.add(
+        "absolute",
+        "right-4",
+        "top-1/2",
+        "-translate-y-1/2"
+      );
       mainNav.appendChild(sortEl);
     }
 
@@ -128,16 +179,16 @@ export function MenuGrid(container) {
     const fmt = new Intl.NumberFormat("en-AE", {
       style: "currency",
       currency: "AED",
-      minimumFractionDigits: 0
+      minimumFractionDigits: 0,
     });
 
     let items = allItems.filter(
-      i => currentCat === "ALL" || i.category.toUpperCase() === currentCat
+      (i) => currentCat === "ALL" || i.category.toUpperCase() === currentCat
     );
     if (currentSub) {
       items = Array.isArray(currentSub)
-        ? items.filter(i => currentSub.includes(i.subcategory))
-        : items.filter(i => i.subcategory === currentSub);
+        ? items.filter((i) => currentSub.includes(i.subcategory))
+        : items.filter((i) => i.subcategory === currentSub);
     }
     if (currentSort === "name") {
       items.sort((a, b) => a.name.localeCompare(b.name));
@@ -145,44 +196,65 @@ export function MenuGrid(container) {
       items.sort((a, b) => a.price - b.price);
     }
 
-    items.forEach(item => {
-      const { name, desc, imageUrl, category, price, priceWithChai } = item;
-      const card = document.createElement("div");
-      card.className =
-        "group relative bg-brand-500/5 rounded-2xl shadow-lg overflow-hidden flex flex-col transition transform hover:shadow-2xl hover:-translate-y-1 hover:scale-105";
-      card.innerHTML = `
-        <div class="relative h-56 overflow-hidden cursor-pointer">
-          <img src="${imageUrl}" alt="${name}"
-               class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
-          <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        </div>
-        <div class="p-6 flex flex-col justify-between flex-grow text-center font-sans text-black">
-          <div>
-            <span class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide mb-4">
-              ${category}
-            </span>
-            <h3 class="text-3xl uppercase font-heading mb-2 text-[#C19462]">${name}</h3>
-            <p class="text-base mb-4">${desc}</p>
-          </div>
-          <div>
-            <p class="text-xl font-semibold mb-1">${fmt.format(price)}</p>
-            ${priceWithChai != null
-              ? `<p class="text-sm italic">${fmt.format(priceWithChai)} with chai</p>`
-              : ``}
-          </div>
-        </div>
-      `;
+    if (currentCat === "ALL") {
+      const grouped = items.reduce((acc, it) => {
+        const cat = it.category;
+        const sub = it.subcategory;
+        acc[cat] = acc[cat] || {};
+        acc[cat][sub] = acc[cat][sub] || [];
+        acc[cat][sub].push(it);
+        return acc;
+      }, {});
 
-      // 👉 OPEN LIGHTBOX ON CLICK
-      const imgWrapper = card.querySelector(".relative.h-56");
-      imgWrapper.addEventListener("click", () => {
-        if (imageUrl) {
-          modal.querySelector("#modalImg").src = imageUrl;
-          modal.classList.remove("hidden");
-        }
-      });
+      Object.keys(grouped)
+        .sort()
+        .forEach((catName) => {
+          // ─── Category pill (full width) ──────────────────────────────
+          const catHeader = document.createElement("div");
+          catHeader.className = "w-full flex justify-center my-6 col-span-full";
+          catHeader.innerHTML = `
+          <span
+            class="px-6 py-2 text-2xl font-bold rounded-full
+                   bg-brand-500 text-white uppercase">
+            ${catName}
+          </span>`;
+          grid.append(catHeader);
 
-      grid.append(card);
+          // ─── For each sub-category ───────────────────────────────────
+          Object.keys(grouped[catName])
+            .sort()
+            .forEach((subName) => {
+              // Sub-category pill (full width)
+              const subHeader = document.createElement("div");
+              subHeader.className =
+                "w-full flex justify-center my-4 col-span-full";
+              subHeader.innerHTML = `
+  <span
+    class="px-6 py-2 text-lg font-semibold rounded-full
+           bg-brand-500 text-white shadow-md">
+    ${subName}
+  </span>`;
+
+              grid.append(subHeader);
+
+              // 3-col grid of cards (full width)
+              const subGrid = document.createElement("div");
+              subGrid.className =
+                "w-full grid gap-10 sm:grid-cols-2 lg:grid-cols-3 mb-8 col-span-full";
+              grouped[catName][subName].forEach((it) => {
+                subGrid.append(createCardElement(it, modal));
+              });
+              grid.append(subGrid);
+            });
+        });
+
+      // done with “ALL” — skip the flat render
+      return;
+    }
+
+    // ─── Other tabs: flat 3-col layout ────────────────────────────
+    items.forEach((item) => {
+      grid.append(createCardElement(item, modal));
     });
 
     gsap.fromTo(
@@ -196,7 +268,7 @@ export function MenuGrid(container) {
   (function addScrollToTopButton() {
     const btn = document.createElement("button");
     btn.id = "scrollToTopBtn";
-    btn.className = 
+    btn.className =
       "fixed bottom-4 right-4 flex items-center justify-center gap-1 " +
       "p-3 rounded-full bg-brand-500 text-white shadow-lg " +
       "opacity-0 pointer-events-none transition-opacity duration-300";
@@ -213,9 +285,7 @@ export function MenuGrid(container) {
       const scrollY = window.scrollY;
       const maxScroll =
         document.documentElement.scrollHeight - window.innerHeight;
-      const pct = maxScroll > 0 
-        ? Math.round((scrollY / maxScroll) * 100) 
-        : 0;
+      const pct = maxScroll > 0 ? Math.round((scrollY / maxScroll) * 100) : 0;
       btn.querySelector("#scrollPercent").textContent = `${pct}%`;
 
       if (scrollY > 300) {
