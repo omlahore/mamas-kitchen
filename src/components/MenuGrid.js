@@ -4,9 +4,14 @@ import { gsap } from "gsap";
 import { HeroCarousel } from "./HeroCarousel.js";
 import { CategoryNav } from "./CategoryNav.js";
 import { db } from "../firebaseConfig.js";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  query,
+  orderBy
+} from "firebase/firestore";
 
-// ➤ Helper: builds a card element for a given item
+// ➤ Helper: builds a card element
 function createCardElement(item, modal) {
   const { name, desc, imageUrl, category, price, priceWithChai } = item;
   const fmt = new Intl.NumberFormat("en-AE", {
@@ -49,18 +54,20 @@ function createCardElement(item, modal) {
     </div>
   `;
 
-  card.querySelector(".relative.h-56").addEventListener("click", () => {
-    if (imageUrl) {
-      modal.querySelector("#modalImg").src = imageUrl;
-      modal.classList.remove("hidden");
-    }
-  });
+  card
+    .querySelector(".relative.h-56")
+    .addEventListener("click", () => {
+      if (imageUrl) {
+        modal.querySelector("#modalImg").src = imageUrl;
+        modal.classList.remove("hidden");
+      }
+    });
 
   return card;
 }
 
 export function MenuGrid(container) {
-  // ❇️ LIGHTBOX MODAL SETUP
+  // ❇️ LIGHTBOX
   const modal = document.createElement("div");
   modal.id = "imageModal";
   modal.className =
@@ -76,37 +83,28 @@ export function MenuGrid(container) {
     </div>
   `;
   document.body.append(modal);
-
-  // Close modal
-  modal.addEventListener("click", (e) => {
+  modal.addEventListener("click", e => {
     if (e.target.id === "imageModal" || e.target.id === "closeModal") {
       modal.classList.add("hidden");
       modal.querySelector("#modalImg").src = "";
     }
   });
 
-  // 1️⃣ Clear & mount the hero
+  // 1️⃣ Hero + clear
   container.innerHTML = "";
   HeroCarousel(container);
 
-  // 2️⃣ Toolbar + nav wrapper
+  // 2️⃣ Toolbar (no sort)
   const toolbar = document.createElement("div");
   toolbar.className = "container mx-auto px-6 py-4";
   toolbar.innerHTML = `
-    <div class="bg-brand-500/10 backdrop-blur-md shadow-md p-4 rounded-xl flex flex-wrap items-center justify-between gap-4">
+    <div class="bg-brand-500/10 backdrop-blur-md shadow-md p-4 rounded-xl flex items-center gap-4">
       <div id="navContainer" class="flex-1"></div>
-      <select id="sortSelect"
-              class="px-4 py-2 rounded-full border border-white/30 bg-white/50
-                     focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
-        <option value="">Sort</option>
-        <option value="name">Name: A → Z</option>
-        <option value="price">Price: Low → High</option>
-      </select>
     </div>
   `;
   container.append(toolbar);
 
-  // 3️⃣ Grid container
+  // 3️⃣ Grid placeholder
   const grid = document.createElement("div");
   grid.id = "menuGrid";
   grid.className =
@@ -115,65 +113,39 @@ export function MenuGrid(container) {
 
   // 4️⃣ State
   let allItems = [];
+  let categoryData = [];
   let currentCat = "ALL";
   let currentSub = "";
-  let currentSort = "";
 
-  // 5️⃣ Sort handler
-  toolbar.querySelector("#sortSelect").addEventListener("change", (e) => {
-    currentSort = e.target.value;
-    renderItems();
-  });
-
-  // 6️⃣ Category & subcategory listeners
-  toolbar.addEventListener("categoryChange", (e) => {
+  // 5️⃣ Listen for nav events
+  toolbar.addEventListener("categoryChange", e => {
     currentCat = e.detail.toUpperCase();
     currentSub = "";
     renderItems();
   });
-  toolbar.addEventListener("subcategoryChange", (e) => {
+  toolbar.addEventListener("subcategoryChange", e => {
     currentSub = e.detail;
     renderItems();
   });
 
-  // 7️⃣ Firestore subscription & nav build
-  const q = query(collection(db, "menuItems"), orderBy("createdAt", "desc"));
-  onSnapshot(q, (snap) => {
-    allItems = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    const cats = Array.from(new Set(allItems.map((i) => i.category)));
-    CategoryNav(toolbar.querySelector("#navContainer"), ["All", ...cats]);
+  // 6️⃣ Firestore subs
 
-    // Reparent Sort into first nav row for layout
-    const navContainer = toolbar.querySelector("#navContainer");
-    const mainNav = navContainer.querySelector("div");
-    if (mainNav) {
-      mainNav.classList.replace("justify-center", "justify-between");
-      mainNav.classList.add("items-center", "relative");
-
-      const buttons = Array.from(mainNav.querySelectorAll("button"));
-      const leftGroup = document.createElement("div");
-      leftGroup.className =
-        "w-full flex flex-wrap justify-center items-center gap-4";
-      buttons.forEach((b) => leftGroup.appendChild(b));
-
-      mainNav.innerHTML = "";
-      mainNav.appendChild(leftGroup);
-
-      const sortEl = toolbar.querySelector("#sortSelect");
-      sortEl.classList.remove("mt-4");
-      sortEl.classList.add(
-        "absolute",
-        "right-4",
-        "top-1/2",
-        "-translate-y-1/2"
-      );
-      mainNav.appendChild(sortEl);
-    }
-
+  // Categories (ordered by `order`)
+  const catQ = query(collection(db, "categories"), orderBy("order", "asc"));
+  onSnapshot(catQ, snap => {
+    categoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    CategoryNav(toolbar.querySelector("#navContainer"), categoryData);
     renderItems();
   });
 
-  // 8️⃣ Render & animate
+  // Menu items (ordered by `createdAt`)
+  const itemsQ = query(collection(db, "menuItems"), orderBy("createdAt", "desc"));
+  onSnapshot(itemsQ, snap => {
+    allItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderItems();
+  });
+
+  // 7️⃣ Render & animate
   function renderItems() {
     grid.innerHTML = "";
     const fmt = new Intl.NumberFormat("en-AE", {
@@ -182,20 +154,18 @@ export function MenuGrid(container) {
       minimumFractionDigits: 0,
     });
 
+    // Filter by cat
     let items = allItems.filter(
-      (i) => currentCat === "ALL" || i.category.toUpperCase() === currentCat
+      i => currentCat === "ALL" || i.category.toUpperCase() === currentCat
     );
+    // Then by sub
     if (currentSub) {
       items = Array.isArray(currentSub)
-        ? items.filter((i) => currentSub.includes(i.subcategory))
-        : items.filter((i) => i.subcategory === currentSub);
-    }
-    if (currentSort === "name") {
-      items.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (currentSort === "price") {
-      items.sort((a, b) => a.price - b.price);
+        ? items.filter(i => currentSub.includes(i.subcategory))
+        : items.filter(i => i.subcategory === currentSub);
     }
 
+    // ─── “ALL” view: use admin order & show every item ─────────
     if (currentCat === "ALL") {
       const grouped = items.reduce((acc, it) => {
         const cat = it.category;
@@ -206,57 +176,62 @@ export function MenuGrid(container) {
         return acc;
       }, {});
 
-      Object.keys(grouped)
-        .sort()
-        .forEach((catName) => {
-          // ─── Category pill (full width) ──────────────────────────────
-          const catHeader = document.createElement("div");
-          catHeader.className = "w-full flex justify-center my-6 col-span-full";
-          catHeader.innerHTML = `
+      categoryData.forEach(({ name: catName, subcategories = [] }) => {
+        const itemsBySub = grouped[catName];
+        if (!itemsBySub) return;
+
+        // Category header
+        const catHeader = document.createElement("div");
+        catHeader.className = "w-full flex justify-center my-6 col-span-full";
+        catHeader.innerHTML = `
           <span
             class="px-6 py-2 text-2xl font-bold rounded-full
                    bg-brand-500 text-white uppercase">
             ${catName}
-          </span>`;
-          grid.append(catHeader);
+          </span>
+        `;
+        grid.append(catHeader);
 
-          // ─── For each sub-category ───────────────────────────────────
-          Object.keys(grouped[catName])
-            .sort()
-            .forEach((subName) => {
-              // Sub-category pill (full width)
-              const subHeader = document.createElement("div");
-              subHeader.className =
-                "w-full flex justify-center my-4 col-span-full";
-              subHeader.innerHTML = `
-  <span
-    class="px-6 py-2 text-lg font-semibold rounded-full
-           bg-brand-500 text-white shadow-md">
-    ${subName}
-  </span>`;
+        // If the admin defined subcategories, render in that order:
+        if (subcategories.length) {
+          subcategories.forEach(subName => {
+            const arr = itemsBySub[subName];
+            if (!arr) return;
+            // Sub-header
+            const subHeader = document.createElement("div");
+            subHeader.className = "w-full flex justify-center my-4 col-span-full";
+            subHeader.innerHTML = `
+              <span
+                class="px-6 py-2 text-lg font-semibold rounded-full
+                       bg-brand-500 text-white shadow-md">
+                ${subName}
+              </span>
+            `;
+            grid.append(subHeader);
+            // Cards
+            const subGrid = document.createElement("div");
+            subGrid.className =
+              "w-full grid gap-10 sm:grid-cols-2 lg:grid-cols-3 mb-8 col-span-full";
+            arr.forEach(it => subGrid.append(createCardElement(it, modal)));
+            grid.append(subGrid);
+          });
+        }
+        // Otherwise, dump all items for this category in one flat grid:
+        else {
+          const allForCat = Object.values(itemsBySub).flat();
+          const subGrid = document.createElement("div");
+          subGrid.className =
+            "w-full grid gap-10 sm:grid-cols-2 lg:grid-cols-3 mb-8 col-span-full";
+          allForCat.forEach(it => subGrid.append(createCardElement(it, modal)));
+          grid.append(subGrid);
+        }
+      });
 
-              grid.append(subHeader);
-
-              // 3-col grid of cards (full width)
-              const subGrid = document.createElement("div");
-              subGrid.className =
-                "w-full grid gap-10 sm:grid-cols-2 lg:grid-cols-3 mb-8 col-span-full";
-              grouped[catName][subName].forEach((it) => {
-                subGrid.append(createCardElement(it, modal));
-              });
-              grid.append(subGrid);
-            });
-        });
-
-      // done with “ALL” — skip the flat render
       return;
     }
 
-    // ─── Other tabs: flat 3-col layout ────────────────────────────
-    items.forEach((item) => {
-      grid.append(createCardElement(item, modal));
-    });
-
+    // ─── Single‐category flat layout ───────────────────────────
+    items.forEach(item => grid.append(createCardElement(item, modal)));
     gsap.fromTo(
       grid.children,
       { opacity: 0, y: 20 },
@@ -264,7 +239,7 @@ export function MenuGrid(container) {
     );
   }
 
-  // 9️⃣ Scroll-to-Top button (unchanged) …
+  // 8️⃣ Scroll-to-top (unchanged)…
   (function addScrollToTopButton() {
     const btn = document.createElement("button");
     btn.id = "scrollToTopBtn";
@@ -280,20 +255,17 @@ export function MenuGrid(container) {
       window.scrollTo({ top: 0, behavior: "smooth" })
     );
     document.body.appendChild(btn);
-
     window.addEventListener("scroll", () => {
       const scrollY = window.scrollY;
-      const maxScroll =
-        document.documentElement.scrollHeight - window.innerHeight;
-      const pct = maxScroll > 0 ? Math.round((scrollY / maxScroll) * 100) : 0;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = max > 0 ? Math.round((scrollY / max) * 100) : 0;
       btn.querySelector("#scrollPercent").textContent = `${pct}%`;
-
       if (scrollY > 300) {
         btn.classList.replace("opacity-0", "opacity-100");
         btn.classList.replace("pointer-events-none", "pointer-events-auto");
       } else {
         btn.classList.replace("opacity-100", "opacity-0");
-        btn.classList.replace("pointer-events-auto", "pointer-events-none");
+        btn.classList.replace("pointer-events-none", "pointer-events-none");
       }
     });
   })();

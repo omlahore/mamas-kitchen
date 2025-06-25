@@ -10,7 +10,9 @@ import {
   deleteDoc,
   doc,
   arrayUnion,
-  arrayRemove
+  arrayRemove,
+  query,
+  orderBy
 }                                      from "firebase/firestore";
 import { uploadDishImage }            from "../services/imageService.js";
 
@@ -27,17 +29,19 @@ export function AdminPanel(container) {
         </button>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 justify-items-center">
 
         <!-- CATEGORY MANAGER (new) -->
-        <div class="bg-neutral-100 p-8 rounded-xl shadow-lg lg:col-span-1">
-          <h3 class="text-2xl font-semibold mb-6 text-brand-700">Manage Categories</h3>
+        <div class="w-full max-w-lg bg-neutral-100 p-8 rounded-xl shadow-lg lg:col-span-1">
+          <h3 class="text-2xl font-semibold mb-6 text-brand-700 text-center">Manage Categories</h3>
+
           <div id="categoryManager" class="space-y-4"></div>
         </div>
 
         <!-- DISH FORM -->
-        <div class="bg-neutral-100 p-8 rounded-xl shadow-lg lg:col-span-1">
-          <h3 class="text-2xl font-semibold mb-6 text-brand-700">Add / Edit Dish</h3>
+        <div class="w-full max-w-lg bg-neutral-100 p-8 rounded-xl shadow-lg lg:col-span-1">
+           <h3 class="text-2xl font-semibold mb-6 text-brand-700 text-center">Add / Edit Dish</h3>
+
           <form id="dishForm" class="space-y-5">
 
             <!-- editing tracker -->
@@ -100,9 +104,12 @@ export function AdminPanel(container) {
         </div>
 
         <!-- DISH LIST -->
-        <div class="lg:col-span-2">
+        <div class="lg:col-span-3">
           <div id="dishesList"
-               class="grid gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3"></div>
+             class="grid gap-6
+                    grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5
+                    justify-items-center"> </div>
+       </div>
         </div>
       </div>
     </section>
@@ -122,11 +129,13 @@ export function AdminPanel(container) {
 
   // 3️⃣ Firestore refs & state
   const catCol = collection(db, "categories");
+  const catQuery = query(catCol, orderBy("order", "asc")); 
   const dishCol = collection(db, "menuItems");
+
   let categories = [];
 
   // 4️⃣ Subscribe to categories → render manager & form selects
-  onSnapshot(catCol, snap => {
+  onSnapshot(catQuery, snap => {
     categories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderCategoryManager();
     populateDishFormCategories();
@@ -134,78 +143,123 @@ export function AdminPanel(container) {
 
   // 5️⃣ Render the category manager UI
   function renderCategoryManager() {
-    const mgr = container.querySelector("#categoryManager");
-    mgr.innerHTML = "";
+  const mgr = container.querySelector("#categoryManager");
+  mgr.innerHTML = "";
 
-    // — Add New Category —
-    const addCatDiv = document.createElement("div");
-    addCatDiv.className = "flex gap-2";
-    addCatDiv.innerHTML = `
-      <input id="newCatName" type="text" placeholder="New category"
-             class="flex-1 border rounded-lg px-2 py-1"/>
-      <button id="addCatBtn"
-              class="px-4 bg-blue-600 text-white rounded-lg">Add</button>
-    `;
-    mgr.append(addCatDiv);
-
-    addCatDiv.querySelector("#addCatBtn").onclick = async () => {
-      const name = addCatDiv.querySelector("#newCatName").value.trim();
-      if (!name) return alert("Enter a category name");
-      await addDoc(catCol, { name, subcategories: [] });
-      addCatDiv.querySelector("#newCatName").value = "";
-    };
-
-    // — List existing —
-    categories.forEach(cat => {
-      const catDiv = document.createElement("div");
-      catDiv.className = "border p-2 rounded-lg";
-
-      // header with delete
-      const header = document.createElement("div");
-      header.className = "flex justify-between items-center mb-2";
-      header.innerHTML = `<strong>${cat.name}</strong>
-        <button class="text-red-600">Delete</button>`;
-      header.querySelector("button").onclick = () =>
-        deleteDoc(doc(db, "categories", cat.id));
-      catDiv.append(header);
-
-      // subcategory list + add
-      const sublist = document.createElement("div");
-      sublist.className = "flex flex-wrap gap-2 mb-2";
-      cat.subcategories.forEach(sub => {
-        const pill = document.createElement("span");
-        pill.className =
-          "px-2 py-1 bg-brand-100 rounded-full flex items-center gap-1";
-        pill.innerHTML = `${sub} <button data-sub="${sub}">&times;</button>`;
-        pill.querySelector("button").onclick = () =>
-          updateDoc(doc(db, "categories", cat.id), {
-            subcategories: arrayRemove(sub)
-          });
-        sublist.append(pill);
-      });
-      catDiv.append(sublist);
-
-      // add-sub UI
-      const addSubDiv = document.createElement("div");
-      addSubDiv.className = "flex gap-2";
-      addSubDiv.innerHTML = `
-        <input type="text" placeholder="New subcategory"
-               class="flex-1 border rounded-lg px-2 py-1"/>
-        <button class="px-3 bg-green-600 text-white rounded-lg">+ Sub</button>
-      `;
-      addSubDiv.querySelector("button").onclick = async () => {
-        const val = addSubDiv.querySelector("input").value.trim();
-        if (!val) return;
-        await updateDoc(doc(db, "categories", cat.id), {
-          subcategories: arrayUnion(val)
-        });
-        addSubDiv.querySelector("input").value = "";
-      };
-      catDiv.append(addSubDiv);
-
-      mgr.append(catDiv);
+  // — Add New Category —
+  const addCatDiv = document.createElement("div");
+  addCatDiv.className = "flex gap-2";
+  addCatDiv.innerHTML = `
+    <input id="newCatName" type="text" placeholder="New category"
+           class="flex-1 border rounded-lg px-2 py-1"/>
+    <button id="addCatBtn"
+            class="px-4 bg-blue-600 text-white rounded-lg">Add</button>
+  `;
+  mgr.append(addCatDiv);
+  addCatDiv.querySelector("#addCatBtn").onclick = async () => {
+    const name = addCatDiv.querySelector("#newCatName").value.trim();
+    if (!name) return alert("Enter a category name");
+    // place new category at end
+    const newOrder = categories.length
+      ? Math.max(...categories.map(c => c.order || 0)) + 1
+      : 0;
+    await addDoc(collection(db, "categories"), {
+      name,
+      subcategories: [],
+      order: newOrder
     });
-  }
+    addCatDiv.querySelector("#newCatName").value = "";
+  };
+
+  // — List & reorder existing categories —
+  categories.forEach((cat, idx) => {
+    const catDiv = document.createElement("div");
+    catDiv.className = "border p-2 rounded-lg";
+
+    // header with up/down/delete
+    const header = document.createElement("div");
+    header.className = "flex justify-between items-center mb-2";
+    header.innerHTML = `
+      <div class="flex items-center gap-2">
+        <button ${idx === 0 ? "disabled" : ""} data-action="up">▲</button>
+        <button ${idx === categories.length - 1 ? "disabled" : ""} data-action="down">▼</button>
+        <strong>${cat.name}</strong>
+      </div>
+      <button data-action="delete" class="text-red-600">Delete</button>
+    `;
+    header.querySelector("[data-action=up]").onclick = () =>
+      swapCategoryOrder(idx, idx - 1);
+    header.querySelector("[data-action=down]").onclick = () =>
+      swapCategoryOrder(idx, idx + 1);
+    header.querySelector("[data-action=delete]").onclick = () =>
+      deleteDoc(doc(db, "categories", cat.id));
+    catDiv.append(header);
+
+    // — SUBCATEGORIES LIST & REORDER —
+    const sublist = document.createElement("div");
+    sublist.className = "space-y-1 mb-2";
+    cat.subcategories.forEach((sub, subIdx) => {
+      const row = document.createElement("div");
+      row.className = "flex items-center gap-2";
+      row.innerHTML = `
+        <button ${subIdx === 0 ? "disabled" : ""} data-action="up">▲</button>
+        <button ${subIdx === cat.subcategories.length - 1 ? "disabled" : ""} data-action="down">▼</button>
+        <span class="px-2 py-1 bg-brand-100 rounded-full flex-1">${sub}</span>
+        <button data-action="delete" class="text-red-600">&times;</button>
+      `;
+      row.querySelector("[data-action=up]").onclick = () =>
+        reorderSub(cat.id, subIdx, subIdx - 1);
+      row.querySelector("[data-action=down]").onclick = () =>
+        reorderSub(cat.id, subIdx, subIdx + 1);
+      row.querySelector("[data-action=delete]").onclick = () =>
+        updateDoc(doc(db, "categories", cat.id), {
+          subcategories: arrayRemove(sub)
+        });
+      sublist.append(row);
+    });
+    catDiv.append(sublist);
+
+    // — Add New Subcategory —
+    const addSubDiv = document.createElement("div");
+    addSubDiv.className = "flex gap-2";
+    addSubDiv.innerHTML = `
+      <input type="text" placeholder="New subcategory"
+             class="flex-1 border rounded-lg px-2 py-1"/>
+      <button class="px-3 bg-green-600 text-white rounded-lg">+ Sub</button>
+    `;
+    addSubDiv.querySelector("button").onclick = async () => {
+      const val = addSubDiv.querySelector("input").value.trim();
+      if (!val) return;
+      await updateDoc(doc(db, "categories", cat.id), {
+        subcategories: arrayUnion(val)
+      });
+      addSubDiv.querySelector("input").value = "";
+    };
+    catDiv.append(addSubDiv);
+
+    mgr.append(catDiv);
+  });
+}
+// Swap two categories’ `order` fields
+async function swapCategoryOrder(i1, i2) {
+  const catA = categories[i1];
+  const catB = categories[i2];
+  const refA = doc(db, "categories", catA.id);
+  const refB = doc(db, "categories", catB.id);
+  await Promise.all([
+    updateDoc(refA, { order: catB.order }),
+    updateDoc(refB, { order: catA.order })
+  ]);
+}
+
+// Reorder a single category’s subcategories array
+async function reorderSub(catId, fromIdx, toIdx) {
+  const cat = categories.find(c => c.id === catId);
+  const subs = [...cat.subcategories];
+  [subs[fromIdx], subs[toIdx]] = [subs[toIdx], subs[fromIdx]];
+  await updateDoc(doc(db, "categories", catId), { subcategories: subs });
+}
+
 
   // 6️⃣ Populate the Dish form’s category & subcategory selects
   function populateDishFormCategories() {

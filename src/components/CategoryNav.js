@@ -1,137 +1,129 @@
 // src/components/CategoryNav.js
 
-export function CategoryNav(container, categories = []) {
-  // Filter out unwanted category
-  const mainCats = categories
-    .filter(name => name && name.trim() && name.toLowerCase() !== 'chai')
-    .map(n => n.trim());
+export function CategoryNav(container, categoryData = []) {
+  // 1️⃣ Build category list & sub-map from Firestore data
+  const filtered = categoryData.filter(
+    c => c.name && c.name.trim() && c.name.toLowerCase() !== "chai"
+  );
 
-  // Hardcoded subcategory map
-   const subcatMap = {
-    ALL:       [],
-    LUNCH:     ['Chaat','Bites','Wraps & Toasties','Super Salad','Mains'],
-    BREAKFAST: [],            // no subcategories for breakfast
-  };
-  // Clear container
-  container.innerHTML = '';
-  container.className = 'w-full flex flex-col items-center gap-4';
+  // Insert "All" at the front:
+  const mainCats = ["All", ...filtered.map(c => c.name.trim())];
 
-  // Create main nav bar
-  const mainNav = document.createElement('div');
+  const subcatMap = filtered.reduce((acc, c) => {
+    acc[c.name.trim().toUpperCase()] = c.subcategories || [];
+    return acc;
+  }, {});
+
+  // 2️⃣ Clear container
+  container.innerHTML = "";
+  container.className = "w-full flex flex-col items-center gap-4";
+
+  // 3️⃣ Main nav
+  const mainNav = document.createElement("div");
   mainNav.className =
-    'w-full flex flex-wrap justify-center gap-4 '  
-    'bg-brand-500/10 p-4 rounded-xl';
+    "w-full flex flex-wrap justify-center gap-4 " +
+    "bg-brand-500/10 p-4 rounded-xl";
   container.appendChild(mainNav);
 
-  // Create sub nav bar
-  const subNav = document.createElement('div');
+  // 4️⃣ Sub nav
+  const subNav = document.createElement("div");
   subNav.className =
-    'w-full flex flex-wrap justify-center gap-2 '  
-    'bg-brand-500/5 p-2 rounded-lg';
+    "w-full flex flex-wrap justify-center gap-2 " +
+    "bg-brand-500/5 p-2 rounded-lg";
   container.appendChild(subNav);
 
+  // 5️⃣ Track selection
   let selectedMain = mainCats[0];
 
-  // Helper: render sub-buttons for a given main category
+  // 6️⃣ renderSubNav: for “All” we’ll get [] and clear the bar
   function renderSubNav(mainName) {
-    subNav.innerHTML = '';
+    subNav.innerHTML = "";
     const key = mainName.toUpperCase();
     const subs = subcatMap[key] || [];
 
-    // Collapse “Desserts”   “Drinks” into one
-    const toRender = (subs.includes('Desserts') && subs.includes('Drinks'))
-      ? subs.filter(s => s !== 'Desserts' && s !== 'Drinks').concat('Desserts & Drinks')
-      : subs.slice();
+    // collapse Desserts+Drinks if both
+    const toRender =
+      subs.includes("Desserts") && subs.includes("Drinks")
+        ? subs.filter(s => s !== "Desserts" && s !== "Drinks").concat("Desserts & Drinks")
+        : subs.slice();
 
     toRender.forEach((sub, i) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
+      const btn = document.createElement("button");
+      btn.type = "button";
       btn.textContent = sub;
       btn.dataset.sub = sub;
       btn.className = [
-        'px-4 py-2 text-sm font-sans font-medium antialiased tracking-wide rounded-full border transition-colors duration-200',
+        "px-4 py-2 text-sm font-sans font-medium antialiased tracking-wide rounded-full border transition-colors duration-200",
         i === 0
-          ? 'bg-brand-500 text-white border-brand-500'
-          : 'bg-white text-neutral-900 border-brand-500 hover:bg-white/90'
-      ].join(' ');
-
-      btn.addEventListener('click', () => {
-        // toggle active states
-        subNav.querySelectorAll('button').forEach(b => {
+          ? "bg-brand-500 text-white border-brand-500"
+          : "bg-white text-neutral-900 border-brand-500 hover:bg-white/90"
+      ].join(" ");
+      btn.addEventListener("click", () => {
+        subNav.querySelectorAll("button").forEach(b => {
           if (b === btn) {
-            b.classList.replace('bg-white', 'bg-brand-500');
-            b.classList.replace('text-neutral-900', 'text-white');
+            b.classList.replace("bg-white", "bg-brand-500");
+            b.classList.replace("text-neutral-900", "text-white");
           } else {
-            b.classList.replace('bg-brand-500', 'bg-white');
-            b.classList.replace('text-white', 'text-neutral-900');
+            b.classList.replace("bg-brand-500", "bg-white");
+            b.classList.replace("text-white", "text-neutral-900");
           }
         });
-
-        // Dispatch real payload: array for combined, string otherwise
-        const payload = sub === 'Desserts & Drinks'
-          ? ['Desserts', 'Drinks']
+        const payload = sub === "Desserts & Drinks"
+          ? ["Desserts", "Drinks"]
           : sub;
-
-        container.dispatchEvent(new CustomEvent('subcategoryChange', {
-          detail: payload,
-          bubbles: true
+        container.dispatchEvent(new CustomEvent("subcategoryChange", {
+          detail: payload, bubbles: true
         }));
       });
-
       subNav.appendChild(btn);
     });
 
-    // fire default
+    // no default for “All” (toRender likely empty)
     if (toRender.length) {
       const first = toRender[0];
-      const payload = first === 'Desserts & Drinks'
-        ? ['Desserts', 'Drinks']
+      const payload = first === "Desserts & Drinks"
+        ? ["Desserts", "Drinks"]
         : first;
-
-      container.dispatchEvent(new CustomEvent('subcategoryChange', {
-        detail: payload,
-        bubbles: true
+      container.dispatchEvent(new CustomEvent("subcategoryChange", {
+        detail: payload, bubbles: true
       }));
     }
   }
 
-  // Build main buttons
+  // 7️⃣ Build main buttons (including “All”)
   mainCats.forEach((name, i) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
+    const btn = document.createElement("button");
+    btn.type = "button";
     btn.textContent = name;
     btn.dataset.cat = name;
     btn.className = [
-      'px-6 py-3 text-lg font-sans font-medium antialiased tracking-wide rounded-full border transition-colors duration-200',
+      "px-6 py-3 text-lg font-sans font-medium antialiased tracking-wide rounded-full border transition-colors duration-200",
       i === 0
-        ? 'bg-brand-500 text-white border-brand-500'
-        : 'bg-white text-neutral-900 border-brand-500 hover:bg-white/90'
-    ].join(' ');
-
-    btn.addEventListener('click', () => {
-      // toggle active state
-      mainNav.querySelectorAll('button').forEach(b => {
+        ? "bg-brand-500 text-white border-brand-500"
+        : "bg-white text-neutral-900 border-brand-500 hover:bg-white/90"
+    ].join(" ");
+    btn.addEventListener("click", () => {
+      mainNav.querySelectorAll("button").forEach(b => {
         if (b === btn) {
-          b.classList.replace('bg-white', 'bg-brand-500');
-          b.classList.replace('text-neutral-900', 'text-white');
+          b.classList.replace("bg-white", "bg-brand-500");
+          b.classList.replace("text-neutral-900", "text-white");
         } else {
-          b.classList.replace('bg-brand-500', 'bg-white');
-          b.classList.replace('text-white', 'text-neutral-900');
+          b.classList.replace("bg-brand-500", "bg-white");
+          b.classList.replace("text-white", "text-neutral-900");
         }
       });
-
       selectedMain = name;
       renderSubNav(selectedMain);
-
-      container.dispatchEvent(new CustomEvent('categoryChange', {
+      container.dispatchEvent(new CustomEvent("categoryChange", {
         detail: name,
         bubbles: true
       }));
     });
-
     mainNav.appendChild(btn);
   });
 
-  // Initial render of sub-nav for the first main category
-  renderSubNav(selectedMain);
+  // 8️⃣ Initial render of sub-nav
+  if (selectedMain) {
+    renderSubNav(selectedMain);
+  }
 }
