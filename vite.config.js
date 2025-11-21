@@ -1,6 +1,4 @@
 import { defineConfig } from 'vite';
-import { copyFileSync } from 'fs';
-import { join } from 'path';
 
 export default defineConfig({
   build: {
@@ -17,14 +15,8 @@ export default defineConfig({
     },
     // Optimize chunk size
     chunkSizeWarningLimit: 1000,
-    // Enable minification
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true, // Remove console.logs in production
-        drop_debugger: true,
-      },
-    },
+    // Enable minification (esbuild is faster and doesn't require extra dependencies)
+    minify: 'esbuild',
     // Copy service worker to dist
     copyPublicDir: true,
   },
