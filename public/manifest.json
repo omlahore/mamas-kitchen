@@ -1,0 +1,19 @@
+{
+  "name": "Mama's Kitchen",
+  "short_name": "Mama's Kitchen",
+  "description": "Delicious home-cooked meals",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#C19462",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

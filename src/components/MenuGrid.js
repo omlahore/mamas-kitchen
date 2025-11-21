@@ -1,6 +1,5 @@
 // src/components/MenuGrid.js
 
-import { gsap } from "gsap";
 import { HeroCarousel } from "./HeroCarousel.js";
 import { CategoryNav } from "./CategoryNav.js";
 import { db } from "../firebaseConfig.js";
@@ -28,6 +27,8 @@ function createCardElement(item, modal) {
   card.innerHTML = `
     <div class="relative h-56 overflow-hidden cursor-pointer">
       <img src="${imageUrl}" alt="${name}"
+           loading="lazy"
+           decoding="async"
            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
       <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent
                   opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -232,11 +233,17 @@ export function MenuGrid(container) {
 
     // ─── Single‐category flat layout ───────────────────────────
     items.forEach(item => grid.append(createCardElement(item, modal)));
-    gsap.fromTo(
-      grid.children,
-      { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 }
-    );
+    
+    // Lazy load GSAP only when needed for animations
+    if (items.length > 0) {
+      import("gsap").then(({ gsap }) => {
+        gsap.fromTo(
+          grid.children,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 }
+        );
+      });
+    }
   }
 
   // 8️⃣ Scroll-to-top (unchanged)…

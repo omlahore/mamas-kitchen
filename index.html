@@ -6,15 +6,26 @@
       name="viewport"
       content="width=device-width,initial-scale=1,maximum-scale=1"
     />
-    <title>Mama’s Kitchen</title>
+    <meta name="description" content="Delicious home-cooked meals from Mama's Kitchen" />
+    <meta name="theme-color" content="#C19462" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>Mama's Kitchen</title>
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts with preconnect and preload -->
    <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link 
   href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;900&display=swap" 
   rel="stylesheet"
+  media="print"
+  onload="this.media='all'"
 >
+<noscript>
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;900&display=swap" 
+    rel="stylesheet"
+  >
+</noscript>
 
 <style>
   body {
@@ -27,8 +38,9 @@
   }
 </style>
 
-    <!-- Tailwind CSS build -->
-    <link rel="stylesheet" href="/src/input.css" />
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/hero3.jpg" as="image" fetchpriority="high">
+    <link rel="preload" href="/logo.png" as="image" fetchpriority="high">
   </head>
   <body class="font-sans bg-gray-50 text-gray-800">
     <div id="app"></div>

@@ -1,7 +1,5 @@
 // src/components/HeroCarousel.js
 
-import { gsap } from "gsap";
-
 export function HeroCarousel(container) {
   // 1) Image URLs
   const images = ["/hero3.jpg"];
@@ -11,10 +9,18 @@ export function HeroCarousel(container) {
   wrapper.className = "relative w-full h-64 sm:h-80 lg:h-96 overflow-hidden";
   
   // 3) Create absolutely-stacked imgs, initially hidden
-  const imgEls = images.map(src => {
+  const imgEls = images.map((src, idx) => {
     const img = document.createElement("img");
     img.src = src;
     img.alt = "";
+    // Preload first image, lazy load others
+    if (idx === 0) {
+      img.loading = "eager";
+      img.fetchPriority = "high";
+    } else {
+      img.loading = "lazy";
+    }
+    img.decoding = "async";
     Object.assign(img.style, {
       position:    "absolute",
       top:         "0",
@@ -34,9 +40,11 @@ export function HeroCarousel(container) {
   title.innerHTML = `
  <img
     src="/logo.png"
-    alt="Mama’s Kitchen Logo"
+    alt="Mama's Kitchen Logo"
+    loading="eager"
+    fetchpriority="high"
+    decoding="async"
     class="h-40 sm:h-52 md:h-64 lg:h-72 xl:h-[24rem] drop-shadow-lg"
-
   />
   `;
   wrapper.append(title);
@@ -44,11 +52,13 @@ export function HeroCarousel(container) {
   // 5) Append to container
   container.append(wrapper);
 
-  // 6) Build GSAP timeline for fade loop
-  const tl = gsap.timeline({ repeat: -1, defaults: { ease: "power1.inOut" } });
-  imgEls.forEach(img => {
-    tl.to(img, { opacity: 1, duration: 1 });  // fade in
-    tl.to(img, { opacity: 1, duration: 4 });  // hold
-    tl.to(img, { opacity: 0, duration: 1 });  // fade out
+  // 6) Build GSAP timeline for fade loop (lazy loaded)
+  import("gsap").then(({ gsap }) => {
+    const tl = gsap.timeline({ repeat: -1, defaults: { ease: "power1.inOut" } });
+    imgEls.forEach(img => {
+      tl.to(img, { opacity: 1, duration: 1 });  // fade in
+      tl.to(img, { opacity: 1, duration: 4 });  // hold
+      tl.to(img, { opacity: 0, duration: 1 });  // fade out
+    });
   });
 }

@@ -313,7 +313,10 @@ async function reorderSub(catId, fromIdx, toIdx) {
       `;
       card.innerHTML = `
         <div class="h-48 bg-neutral-200">
-          <img src="${imageUrl}" alt="${name}" class="h-full w-full object-cover"/>
+          <img src="${imageUrl}" alt="${name}" 
+               loading="lazy" 
+               decoding="async"
+               class="h-full w-full object-cover"/>
         </div>
         <div class="p-5 flex-1 flex flex-col">
           <h4 class="text-lg font-bold text-brand-700 mb-2">${name}</h4>
